@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Check for newer versions of libraries
+
+clojure -T:search/outdated
+

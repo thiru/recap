@@ -1,0 +1,10 @@
+#!/bin/sh
+
+echo "Deleting auto-generated code & output binaries..."
+
+rm -f recap
+rm -rf .cpcache/
+rm -rf classes/
+rm -rf out/
+rm -rf target/
+

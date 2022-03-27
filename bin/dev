@@ -1,0 +1,8 @@
+#!/bin/sh
+
+echo "Starting dev-oriented REPL..."
+
+# NOTE: This uses aliases from: https://github.com/practicalli/clojure-deps-edn
+
+clojure -M:repl/rebel:dev "$@"
+

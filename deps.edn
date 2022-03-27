@@ -1,0 +1,17 @@
+{:aliases
+ {;; Start dev-oriented environment:
+  :dev {:extra-deps
+        {;; Hot code reloading (JVM only):
+         thiru/clj-reloader {:git/url "https://github.com/thiru/clj-reloader"
+                             :sha "8646987342602ab2c6fd0b966386eacda0844f64"}}
+        :extra-paths ["dev"]
+        :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]}}
+ :paths ["src"]
+ :deps
+ {org.clojure/clojure {:mvn/version "1.11.0"}
+
+  ;; Improved cond, etc. with less nesting:
+  better-cond/better-cond {:mvn/version "2.1.4"}
+
+  ;; Prettier exception printing:
+  io.aviso/pretty {:mvn/version "1.1.1"}}}

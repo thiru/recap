@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Run app using Clojure CLI.
+
+clojure -M -m recap.main "$@"
+
