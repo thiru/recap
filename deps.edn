@@ -13,5 +13,8 @@
   ;; Improved cond, etc. with less nesting:
   better-cond/better-cond {:mvn/version "2.1.4"}
 
+  ;; Colourised Clojure pretty-printer:
+  mvxcvi/puget {:mvn/version "1.3.2"}
+
   ;; Prettier exception printing:
   io.aviso/pretty {:mvn/version "1.1.1"}}}

@@ -1,6 +1,7 @@
 (ns recap.cli
   (:require [clojure.string :as str]
             [better-cond.core :as b]
+            [puget.printer :as puget]
             [utils.common :as c]
             [utils.results :as r]
             [recap.caption :as cap]))
@@ -55,4 +56,4 @@
       (c/abort 1 (:message parse-r))
 
       :else
-      (println parse-r))))
+      (puget/cprint parse-r))))
