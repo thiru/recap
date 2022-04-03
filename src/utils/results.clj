@@ -1,6 +1,6 @@
 (ns utils.results
-  "General facilities around reporting and validation."
-  (:require [clojure.string :as str]))
+  "Generic facilities around reporting and validation."
+  (:require [clojure.spec.alpha :as s]))
 
 (set! *warn-on-reflection* true) ; for graalvm
 
@@ -20,17 +20,20 @@
    :error -1
    :fatal -2})
 
+(s/def ::level #(contains? levels %))
+
 ;; ## Result
 ;; ----------------------------------------------------------------------------
 
-(defn result?
-  "Check if the given object is a valid result map."
-  [obj]
-  (boolean
-    (and (not (nil? obj))
-         (map? obj)
-         (:level obj)
-         (:message obj))))
+;; NOTE: Allow a message to be any type, since we can usually get a meaningful
+;; string representation of most objects.
+(s/def ::message any?)
+(s/def ::result (s/keys :req-un [::level ::message]))
+(s/fdef r
+        :args (s/cat :level ::level
+                     :message (s/? ::message)
+                     :more (s/? map?))
+        :ret ::result)
 
 (defn r
   "Creates a map representing the result of some operation.
@@ -47,7 +50,7 @@
       * _negative_ values are considered some level of failure
       * while _non-negative_ values are considered informational or successful
   * `message`
-    * A message describing the result
+    * A message describing the result (usually a string)
   * `rest`
     * Additional key/value pairs to merge into the result map"
   ([level]
@@ -78,7 +81,7 @@
   false)
 
 (defmethod success? clojure.lang.PersistentArrayMap map-type [maybe-r]
-  (if (result? maybe-r)
+  (if (s/valid? ::result maybe-r)
     (<= 0 (get levels (:level maybe-r) (:error levels)))
     true))
 

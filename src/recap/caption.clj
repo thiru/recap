@@ -1,23 +1,32 @@
 (ns recap.caption
-  (:require [clojure.string :as str]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.string :as str]
             [better-cond.core :as b]
             [utils.results :as r]))
 
+
+
 (declare parse-time-range)
+
+
+
+(s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]\d+" %))
+(s/def ::start ::duration)
+(s/def ::end ::duration)
+(s/def ::lines (s/coll-of string?))
+(s/def ::cue (s/keys :req-un [::start ::end ::lines]))
+(s/def ::caption (s/coll-of ::cue))
+
+(s/fdef parse
+        :args (s/cat :input string?)
+        :ret ::caption)
 
 (defn parse
   "Parse the given captions text into a Clojure data structure.
 
-  We only care about the cues and their timestamps.
-
-  Returns a vector of maps if successful. An empty vector is returned if the
-  input could not be parsed as captions. Each map represents a cue with:
-  * `:start`
-    * The time the cue appears on screen (e.g. 00:01:20)
-  * `:end`
-    * The time the cue is removed from screen (e.g. 00:01:30)
-  * `:lines`
-    * A vector of strings, for each line of text."
+  We only care about the cues and their timestamps. Other text/metadata is
+  passed along as is so this should work equally well for SRT and WebVTT
+  formats."
   [input]
   (b/cond
     (str/blank? input)
@@ -63,18 +72,24 @@
                                                         [])
                                                     line)))))))))))))
 
+
+
+(s/fdef parse-time-range
+        :args (s/cat :input string?)
+        :ret (s/keys :req-un [::start ::end]))
+
 (defn parse-time-range
   [input]
   (b/cond
     (str/blank? input)
-    nil
+    {}
 
     let [matches (re-matches #"(\d\d:\d\d:\d\d[,.]\d+)\s+-+>\s+(\d\d:\d\d:\d\d[,.]\d+)"
                              input)]
 
     (or (empty? matches)
         (not= 3 (count matches)))
-    nil
+    {}
 
     {:start (str/replace (second matches) "," ".")
      :end (str/replace (last matches) "," ".")}))

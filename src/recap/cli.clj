@@ -1,53 +1,73 @@
 (ns recap.cli
-  (:require [clojure.string :as str]
+  "Command-line interface abstraction."
+  (:require [clojure.spec.alpha :as s]
+            [clojure.string :as str]
             [better-cond.core :as b]
             [puget.printer :as puget]
             [utils.common :as c]
             [utils.results :as r]
             [recap.caption :as cap]))
 
+
+
 (def usage "Usage: recap <command> [<args>]")
+
+
+
+(s/def ::cmd-name keyword?)
+(s/def ::cmd-args (s/coll-of string?))
+(s/def ::parse-r (s/keys :req-un [:r/level :r/message
+                                  ::cmd-name ::cmd-args]))
+(s/fdef parse
+        :args (s/cat :args (s/coll-of string?))
+        :ret ::parse-r)
 
 (defn parse
   "Parse the given CLI arguments."
   [args]
   (if (empty? args)
     (r/r :error "No command specified"
-         :command nil
-         :args [])
+         :cmd-name nil
+         :cmd-args [])
 
     (let [cmd (-> args first str/lower-case keyword)]
       (cond
         (or (= :help cmd) (= :-h cmd) (= :--help cmd))
         (r/r :success ""
-             :command :help
-             :args [])
+             :cmd-name :help
+             :cmd-args [])
 
         (= :parse cmd)
         (r/r :success ""
-             :command cmd
-             :args (rest args))
+             :cmd-name cmd
+             :cmd-args (rest args))
 
         :else
         (r/r :error (format "Unrecognised command '%s'" (first args))
-             :command cmd
-             :args [])))))
+             :cmd-name cmd
+             :cmd-args [])))))
 
-(defn action
-  "Action the specified CLI command & args."
+
+
+(s/fdef action!
+        :args (s/cat :cli-r ::parse-r)
+        :ret nil?)
+
+(defn action!
+  "Action the specified CLI command."
   [cli-r]
   (when (r/failed? cli-r)
     (c/abort 1 (:message cli-r)))
 
-  (case (:command cli-r)
+  (case (:cmd-name cli-r)
     :help (println usage)
 
     :parse
     (b/cond
-      let [slurp-r (c/slurp-file (-> cli-r :args first))]
+      let [slurp-r (c/slurp-file (-> cli-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (c/abort 1 (str "Attempt to parse captions failed because of the following error:\n"
+      (c/abort 1 (str "Attempt to parse captions failed because of the following error: "
                       (:message slurp-r)))
 
       let [parse-r (cap/parse slurp-r)]
