@@ -3,7 +3,19 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [clojure.java.io :as io]
+            [puget.printer :as puget]
             [utils.results :as r]))
+
+
+
+(defmacro spy
+  "A simpler version of Timbre's spy which simply pretty-prints to stdout
+  and returns the eval'd expression."
+  [expr]
+  `(let [evaled# ~expr]
+     (print (str '~expr " => "))
+     (puget/cprint evaled#)
+     evaled#))
 
 
 
