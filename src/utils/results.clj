@@ -25,6 +25,11 @@
 ;; ## Result
 ;; ----------------------------------------------------------------------------
 
+(defn result?
+  "Determine whether the given object is a valid result."
+  [obj]
+  (s/valid? ::result obj))
+
 ;; NOTE: Allow a message to be any type, since we can usually get a meaningful
 ;; string representation of most objects.
 (s/def ::message any?)
