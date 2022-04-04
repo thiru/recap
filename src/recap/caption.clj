@@ -2,7 +2,9 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
-            [recap.caption.utils :as capu]))
+            [recap.caption.utils :as capu]
+            [utils.common :as u]
+            [utils.results :as r]))
 
 
 
@@ -133,3 +135,58 @@
                               (:lines cue))
                     (:line cue))
                   "\n")))))
+
+
+
+(s/fdef find-overlapping-cues
+        :args (s/cat :cues ::cues)
+        :ret (s/coll-of int?))
+
+(defn find-overlapping-cues
+  "Check if the given cues contain any cases where more than one cue appears on
+  screen at once.
+
+  Returns a list of indeces of cues which overlap, if any."
+  [cues]
+  (if (or (empty? cues)
+          (= 1 (count cues)))
+    []
+    ;; Skip first cue since we're always comparing with previous cues
+    (loop [[curr-cue & rest-cues] (rest cues)
+           prev-cue (first cues)
+           curr-cue-num 2
+           overlapping-idxs []]
+      (b/cond
+        (and (empty? curr-cue) (empty? rest-cues))
+        (-> overlapping-idxs distinct sort vec)
+
+        let [prev-cue-end-secs (u/duration->secs (:end prev-cue))]
+
+        (r/failed? prev-cue-end-secs)
+        (r/r :error (format "Failed to parse end time of cue %d. %s"
+                            curr-cue-num
+                            (if (r/result? prev-cue-end-secs)
+                              (:message prev-cue-end-secs)
+                              "")))
+
+        let [curr-cue-start-secs (u/duration->secs (:start curr-cue))]
+
+        (r/failed? curr-cue-start-secs)
+        (r/r :error (format "Failed to parse end time of cue %d. %s"
+                            (inc curr-cue-num)
+                            (if (r/result? curr-cue-start-secs)
+                              (:message curr-cue-start-secs)
+                              "")))
+
+        let [overlaps? (> prev-cue-end-secs
+                          curr-cue-start-secs)]
+
+        ;do (u/spy [prev-cue-end-secs curr-cue-start-secs overlaps?]) ; DEBUG
+
+        :else
+        (recur rest-cues
+               curr-cue
+               (inc curr-cue-num)
+               (if overlaps?
+                 (conj overlapping-idxs curr-cue-num (dec curr-cue-num))
+                 overlapping-idxs))))))

@@ -1,6 +1,7 @@
 (ns utils.common
   "Common/generic utilities."
-  (:require [clojure.spec.alpha :as s]
+  (:require [better-cond.core :as b]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [clojure.java.io :as io]
             [puget.printer :as puget]
@@ -64,3 +65,83 @@
         (r/r :error
              (format "File '%s' was not found or inaccessible" file-path))
         (slurp file)))))
+
+
+
+(s/fdef parse-int
+        :args (s/cat :input string?
+                     :fallback int?)
+        :ret int?)
+
+(defn parse-int
+  "Exception-free integer parsing.
+
+   Returns the parsed integer if successful, otherwise fallback."
+  [input & {:keys [fallback]
+            :or {fallback 0}}]
+  (try
+   (Integer/parseInt input)
+   (catch Exception _
+     fallback)))
+
+
+
+(s/fdef parse-float
+        :args (s/cat :input string?
+                     :fallback float?)
+        :ret float?)
+
+(defn parse-float
+  "Exception-free float parsing.
+
+   Returns the parsed float if successful, otherwise fallback."
+  [input & {:keys [fallback]
+            :or {fallback 0.0}}]
+  (try
+   (Float/parseFloat input)
+   (catch Exception _
+     fallback)))
+
+
+(s/fdef duration->secs
+        :args (s/cat :duration string?)
+        :ret (s/or :integer int? :result :r/result))
+
+(defn duration->secs
+  "Parse the given duration string to a total number of seconds.
+
+  Returns the total number of seconds if successful, otherwise a `:r/result`."
+  [duration]
+  (b/cond
+    (str/blank? duration)
+    0
+
+    let [segs (str/split duration #":")]
+
+    (< 3 (count segs))
+    (r/r :error (format (str "Expected a maximum of 3 time segments (e.g. "
+                             "'01:02:03') but found %d")
+                    (count segs)))
+
+    let [reverse-segs (reverse segs)
+         hours (let [hours (nth reverse-segs 2 nil)]
+                 (if hours
+                   (parse-int hours :fallback -1)
+                   0))
+         minutes (-> (second reverse-segs)
+                     (parse-int :fallback -1))
+         seconds (-> (first reverse-segs)
+                     (parse-float :fallback -1.0))]
+
+    (or (neg? hours)
+        (neg? minutes)
+        (neg? seconds))
+    (r/r :error
+         "Invalid duration. Could not parse each time segment as a number.")
+
+    let [total-secs (+ seconds
+                       (* minutes 60)
+                       (* hours 3600))]
+
+    :else
+    total-secs))
