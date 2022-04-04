@@ -90,3 +90,46 @@
                                                       [])
                                                   line))))))))))))
 
+
+
+(def output-formats
+  "Supported caption formats that can be output."
+  #{:srt :vtt})
+
+
+
+(s/fdef to-string
+        :args (s/cat :caption ::caption
+                     :output-format output-formats
+                     :collapse-cue-lines? any?)
+        :ret string?)
+
+(defn to-string
+  "Convert the given captions to a plain string.
+
+  * `collapse-cue-lines?`
+    * Whether to join separate lines in a cue into one (space-delimited)
+
+  Returns a string."
+  [caption output-format & {:keys [collapse-cue-lines?]}]
+  (loop [[cue & rest-cues] (:cues caption)
+         cue-idx 1
+         cue-text ""]
+    (if (and (empty? cue) (empty? rest-cues))
+      (-> (if (= :vtt output-format)
+            (str/join "\n" (:prelude caption))
+            "")
+          (str cue-text)
+          str/trim)
+      (recur rest-cues
+             (inc cue-idx)
+             (str cue-text "\n"
+                  (if (= :srt output-format)
+                    (str cue-idx "\n")
+                    "")
+                  (:start cue) " --> " (:end cue) "\n"
+                  (if (:lines cue)
+                    (str/join (if collapse-cue-lines? " " "\n")
+                              (:lines cue))
+                    (:line cue))
+                  "\n")))))
