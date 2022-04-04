@@ -7,6 +7,7 @@
             [clojure.reflect :refer :all]
             [clojure.repl :refer :all]
             [clojure.string :as str]
+            [puget.printer :as puget]
             [reloader.core :as reloader]
             [utils.results :as r]
             [recap.cli :as cli]
@@ -20,3 +21,7 @@
 
 (defonce ^{:doc "A short-hand to quit gracefully (otherwise rebel-readline hangs process)."}
   q (delay (System/exit 0)))
+
+(defn PP
+  []
+  (puget/cprint *1))
