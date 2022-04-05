@@ -91,15 +91,8 @@
 
 
 
-(def output-formats
-  "Supported output caption formats."
-  #{:srt :vtt})
-
-
-
 (s/fdef to-string
         :args (s/cat :caption ::caption
-                     :output-format output-formats
                      :collapse-cue-lines? any?)
         :ret string?)
 
@@ -110,12 +103,12 @@
     * Whether to join separate lines in a cue into one (space-delimited)
 
   Returns a string."
-  [caption output-format & {:keys [collapse-cue-lines?]}]
+  [caption & {:keys [collapse-cue-lines?]}]
   (loop [[cue & rest-cues] (:cues caption)
          cue-idx 1
          cue-text ""]
     (if (and (empty? cue) (empty? rest-cues))
-      (-> (if (= :vtt output-format)
+      (-> (if (not (empty? (:prelude caption)))
             (str/join "\n" (:prelude caption))
             "")
           (str cue-text)
@@ -123,7 +116,9 @@
       (recur rest-cues
              (inc cue-idx)
              (str cue-text "\n"
-                  (if (= :srt output-format)
+                  ;; NOTE: assuming that a `caption` without a prelude is of
+                  ;; SRT format, and so requires numbered cues.
+                  (if (empty? (:prelude caption))
                     (str cue-idx "\n")
                     "")
                   (:start cue) " --> " (:end cue) "\n"
