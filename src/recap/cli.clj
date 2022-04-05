@@ -10,7 +10,23 @@
 
 
 
-(def usage "Usage: recap <command> [<args>]")
+(def usage
+  (->> ["Usage: recap <command> [<args>]"
+        ""
+        "Commands:"
+        ""
+        "help, --help, -h"
+        "  Show this help"
+        ""
+        "parse <FILE>"
+        "  Parse the given caption file and output as an EDN map"
+        ""
+        "overlap <FILE>"
+        "  Find overlapping cues in the given caption file"
+        ""
+        "contiguous <FILE>"
+        "  Find contiguous same speaker tags and remove them"]
+       (str/join "\n")))
 
 
 
@@ -37,7 +53,7 @@
              :cmd-name :help
              :cmd-args [])
 
-        (= :parse cmd)
+        (contains? #{:parse :overlap :contiguous} cmd)
         (r/r :success ""
              :cmd-name cmd
              :cmd-args (rest args))
@@ -76,4 +92,37 @@
       (c/abort 1 (:message parse-r))
 
       :else
-      (puget/cprint parse-r))))
+      (puget/cprint parse-r))
+
+    :overlap
+    (b/cond
+      let [slurp-r (c/slurp-file (-> cli-r :cmd-args first))]
+
+      (r/failed? slurp-r)
+      (c/abort 1 (str "Attempt to parse captions failed because of the following error: "
+                      (:message slurp-r)))
+
+      let [parse-r (cap/parse slurp-r)]
+
+      (r/failed? parse-r)
+      (c/abort 1 (:message parse-r))
+
+      :else
+      (let [indeces (cap/find-overlapping-cues (:cues parse-r))]
+        (if (empty? indeces)
+          (println "No overlapping cues found")
+          (println
+            (format "Found %d overlapping cue(s) at the following positions:\n%s"
+                    (count indeces)
+                    (str/join ", " indeces))))))
+
+    :contiguous
+    (b/cond
+      let [slurp-r (c/slurp-file (-> cli-r :cmd-args first))]
+
+      (r/failed? slurp-r)
+      (c/abort 1 (str "Attempt to parse captions failed because of the following error: "
+                      (:message slurp-r)))
+
+      :else
+      (println (cap/strip-contiguous-speaker-tags slurp-r)))))
