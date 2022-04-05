@@ -24,9 +24,7 @@
 (defn parse
   "Parse the given captions text into a Clojure data structure.
 
-  We only care about the cues and their timestamps. Other text/metadata is
-  passed along as is so this should work equally well for SRT and WebVTT
-  formats."
+  This should work for SRT and WebVTT formats."
   [input]
   (b/cond
     (str/blank? input)
@@ -95,7 +93,7 @@
 
 
 (def output-formats
-  "Supported caption formats that can be output."
+  "Supported output caption formats."
   #{:srt :vtt})
 
 
