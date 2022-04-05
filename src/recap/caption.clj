@@ -28,13 +28,13 @@
   [input]
   (b/cond
     (str/blank? input)
-    []
+    {}
 
     let [lines (str/split-lines input)
          num-lines (count lines)]
 
     (empty? lines)
-    []
+    {}
 
     :else
     (loop [[line & rest-lines] lines
