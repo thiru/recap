@@ -183,7 +183,49 @@
                  (conj overlapping-idxs curr-cue-num (dec curr-cue-num))
                  overlapping-idxs))))))
 
+
+
+(s/fdef strip-contiguous-speaker-tags
+        :args (s/cat :input string?)
+        :ret string?)
+
+(defn strip-contiguous-speaker-tags
+  "Remove contiguous same speaker tags from the given captions.
+
+  I.e. only show a speaker tag when there is a change in speaker."
+  [input]
+  (if (str/blank? input)
+    input
+    (let [lines (str/split-lines input)]
+      (loop [[line & remaining-lines] lines
+             last-speaker-tag nil
+             stripped []]
+        (let [curr-speaker-tag (capu/get-speaker-tag line)
+              adjusted-line (if (and curr-speaker-tag
+                                     (= last-speaker-tag curr-speaker-tag))
+                              (-> line
+                                  (subs (count curr-speaker-tag))
+                                  str/trim)
+                              line)]
+          (if (nil? remaining-lines)
+            (str/join "\n"
+                      (conj stripped adjusted-line))
+            (recur remaining-lines
+                   (if (and curr-speaker-tag
+                            (not= last-speaker-tag curr-speaker-tag))
+                     curr-speaker-tag
+                     last-speaker-tag)
+                   ;; Account for the case where the speaker tag is the only
+                   ;; text in the line. We don't want to add a blank line.
+                   (if (and curr-speaker-tag
+                            (empty? adjusted-line))
+                     stripped
+                     (conj stripped adjusted-line)))))))))
+
+
+
 (comment
   (-> "tmp/captions.vtt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse to-string println)
-  (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues))
+  (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
+  (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println))
