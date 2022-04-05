@@ -30,8 +30,7 @@
     (str/blank? input)
     {}
 
-    let [lines (str/split-lines input)
-         num-lines (count lines)]
+    let [lines (str/split-lines input)]
 
     (empty? lines)
     {}
