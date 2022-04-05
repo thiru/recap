@@ -15,7 +15,7 @@
 (s/def ::lines (s/coll-of string?))
 (s/def ::cue (s/keys :req-un [::start ::end ::lines]))
 (s/def ::cues (s/coll-of ::cue))
-(s/def ::caption (s/keys :req-un [::prelude ::cues]))
+(s/def ::caption (s/keys :opt-un [::prelude ::cues]))
 
 (s/fdef parse
         :args (s/cat :input string?)
