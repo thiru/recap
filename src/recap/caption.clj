@@ -182,3 +182,8 @@
                (if overlaps?
                  (conj overlapping-idxs curr-cue-num (dec curr-cue-num))
                  overlapping-idxs))))))
+
+(comment
+  (-> "tmp/captions.vtt" slurp parse)
+  (-> "tmp/captions.vtt" slurp parse to-string println)
+  (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues))
