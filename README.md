@@ -1,19 +1,19 @@
 # Recap
 
-Realign caption files for better readability.
+Realign caption files for better readability (and other caption utilities).
 
 ## Usage
 
 The easiest way to run recap is to download the binary under Releases then run:
 
 ```shell
-$ recap <command> [<args>]
+$ recap --help
 ```
 
 To run it from source (requires clojure):
 
 ```shell
-$ bin/app <command> [<args>]
+$ bin/app --help
 ```
 
 ## Develop

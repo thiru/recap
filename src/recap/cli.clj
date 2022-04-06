@@ -6,14 +6,23 @@
             [puget.printer :as puget]
             [utils.common :as c]
             [utils.results :as r]
+            [recap.app :as app]
             [recap.caption :as cap]))
 
 
 
 (def usage
-  (->> ["Usage: recap <command> [<args>]"
+  (->> [(str app/app-name " " app/version)
+        app/author
         ""
-        "Commands:"
+        app/description
+        ""
+        "USAGE: recap <command> [<args>]"
+        ""
+        "COMMANDS:"
+        ""
+        "contiguous <FILE>"
+        "  Find contiguous same speaker tags and remove them"
         ""
         "help, --help, -h"
         "  Show this help"
@@ -24,8 +33,8 @@
         "overlap <FILE>"
         "  Find overlapping cues in the given caption file"
         ""
-        "contiguous <FILE>"
-        "  Find contiguous same speaker tags and remove them"]
+        "version, --version"
+        "  Show current version"]
        (str/join "\n")))
 
 
@@ -48,9 +57,14 @@
 
     (let [cmd (-> args first str/lower-case keyword)]
       (cond
-        (or (= :help cmd) (= :-h cmd) (= :--help cmd))
+        (contains? #{:help :--help :-h} cmd)
         (r/r :success ""
              :cmd-name :help
+             :cmd-args [])
+
+        (contains? #{:version :--version} cmd)
+        (r/r :success ""
+             :cmd-name :version
              :cmd-args [])
 
         (contains? #{:parse :overlap :contiguous} cmd)
@@ -77,6 +91,8 @@
 
   (case (:cmd-name cli-r)
     :help (println usage)
+
+    :version (println app/version)
 
     :parse
     (b/cond
