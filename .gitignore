@@ -1,5 +1,7 @@
 .*history
 .cpcache
+.clj-kondo/**
+!.clj-kondo/config.edn
 .nrepl-port
 classes/
 out/
