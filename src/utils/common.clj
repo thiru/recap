@@ -47,6 +47,23 @@
 
 
 
+(s/fdef fmt
+        :args (s/cat :formatter string?
+                     :args (s/coll-of string?))
+        :ret string?)
+
+(defn fmt
+  "A convenience function to create a formatted string (via `format`).
+
+  The first argument is the format control string. If it's a list it will be
+  concatenated together. This makes it easier to format long strings."
+  [formatter & args]
+  (if (sequential? formatter)
+    (apply format (str/join "" formatter) args)
+    (apply format formatter args)))
+
+
+
 (s/fdef slurp-file
         :args (s/cat :file-path string?)
         :ret (s/or :string string?
