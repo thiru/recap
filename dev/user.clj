@@ -11,7 +11,6 @@
             [reloader.core :as reloader]
             [utils.common :as u]
             [utils.results :as r]
-            [recap.app :as app]
             [recap.cli :as cli]
             [recap.caption :as cap]))
 

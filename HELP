@@ -1,0 +1,26 @@
+recap %s
+
+Realign caption files for better readability (and other caption utilities).
+
+USAGE: recap <command> [<args>]
+
+COMMANDS:
+
+contiguous <FILE>
+  Find contiguous same speaker tags and remove them
+
+parse <FILE>
+  Parse the given caption file and output as an EDN map
+
+overlap <FILE>
+  Find overlapping cues in the given caption file
+
+rebuild <FILE>
+  Join cues for better readability (based on punctuation)
+
+help, --help, -h
+  Show this help
+
+version, --version
+  Show current version
+

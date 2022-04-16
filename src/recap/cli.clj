@@ -6,39 +6,14 @@
             [puget.printer :as puget]
             [utils.common :as c]
             [utils.results :as r]
-            [recap.app :as app]
             [recap.caption :as cap]))
 
 
 
-(def usage
-  (->> [(str app/app-name " " app/version)
-        app/author
-        ""
-        app/description
-        ""
-        "USAGE: recap <command> [<args>]"
-        ""
-        "COMMANDS:"
-        ""
-        "contiguous <FILE>"
-        "  Find contiguous same speaker tags and remove them"
-        ""
-        "help, --help, -h"
-        "  Show this help"
-        ""
-        "parse <FILE>"
-        "  Parse the given caption file and output as an EDN map"
-        ""
-        "overlap <FILE>"
-        "  Find overlapping cues in the given caption file"
-        ""
-        "rebuild <FILE>"
-        "  Join cues for better readability (based on punctuation)"
-        ""
-        "version, --version"
-        "  Show current version"]
-       (str/join "\n")))
+(def version (-> (slurp "VERSION")
+                 str/trim))
+(def help (-> (slurp "HELP")
+              (format version)))
 
 
 
@@ -93,9 +68,9 @@
     (c/abort 1 (:message cli-r)))
 
   (case (:cmd-name cli-r)
-    :help (println usage)
+    :help (println help)
 
-    :version (println app/version)
+    :version (println version)
 
     :parse
     (b/cond
