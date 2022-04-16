@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [better-cond.core :as b]
             [recap.caption.utils :as capu]
+            [recap.caption.rebuild :as rebuild]
             [utils.common :as u]
             [utils.results :as r]))
 
@@ -16,6 +17,21 @@
 (s/def ::cue (s/keys :req-un [::start ::end ::lines]))
 (s/def ::cues (s/coll-of ::cue))
 (s/def ::caption (s/keys :opt-un [::prelude ::cues]))
+
+
+
+(s/fdef empty-caption?
+        :args (s/cat :caption ::caption)
+        :ret boolean?)
+
+(defn empty-caption?
+  "Determine whether the given caption has any content (i.e. no cues)."
+  [caption]
+  (or (nil? caption)
+      (empty? caption)
+      (empty? (:cues caption))))
+
+
 
 (s/fdef parse
         :args (s/cat :input string?)
@@ -224,8 +240,47 @@
 
 
 
+(s/fdef rebuild
+        :args (s/cat :caption ::caption)
+        :ret ::caption)
+
+(defn rebuild
+  "Rebuild the given captions for better readability, based on punctuation."
+  [caption & {:keys [opts]
+              :or {opts rebuild/default-opts}}]
+  (if (empty-caption? caption)
+    caption
+    (loop [[curr-input-cue & rest-input-cues] (-> caption :cues rest)
+           wip-cue (-> caption :cues first)
+           final-cues []]
+      (if (empty? rest-input-cues)
+        (-> caption
+            (assoc :cues
+                   (conj final-cues (rebuild/join-cues [wip-cue curr-input-cue])))
+            to-string)
+        (if (rebuild/start-new-cue? wip-cue curr-input-cue opts)
+          (recur rest-input-cues
+                 curr-input-cue
+                 (conj final-cues wip-cue))
+          (recur rest-input-cues
+                 (rebuild/join-cues [wip-cue curr-input-cue])
+                 final-cues))))))
+
+
+
 (comment
   (-> "tmp/captions.vtt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse to-string println)
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
-  (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println))
+  (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println)
+  (def caps (-> "tmp/one-word.srt"
+                slurp
+                strip-contiguous-speaker-tags
+                parse))
+  (rebuild/join-cues (->> "tmp/one-word.srt"
+                          slurp
+                          strip-contiguous-speaker-tags
+                          parse
+                          :cues
+                          (take 3)))
+  (rebuild caps))

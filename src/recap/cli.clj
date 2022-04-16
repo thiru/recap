@@ -33,6 +33,9 @@
         "overlap <FILE>"
         "  Find overlapping cues in the given caption file"
         ""
+        "rebuild <FILE>"
+        "  Join cues for better readability (based on punctuation)"
+        ""
         "version, --version"
         "  Show current version"]
        (str/join "\n")))
@@ -67,7 +70,7 @@
              :cmd-name :version
              :cmd-args [])
 
-        (contains? #{:parse :overlap :contiguous} cmd)
+        (contains? #{:parse :overlap :contiguous :rebuild} cmd)
         (r/r :success ""
              :cmd-name cmd
              :cmd-args (rest args))
@@ -141,4 +144,22 @@
                       (:message slurp-r)))
 
       :else
-      (println (cap/strip-contiguous-speaker-tags slurp-r)))))
+      (println (cap/strip-contiguous-speaker-tags slurp-r)))
+
+    :rebuild
+    (b/cond
+      let [slurp-r (c/slurp-file (-> cli-r :cmd-args first))]
+
+      (r/failed? slurp-r)
+      (c/abort 1 (str "Attempt to parse captions failed because of the following error: "
+                      (:message slurp-r)))
+
+      let [parse-r (-> slurp-r
+                       cap/strip-contiguous-speaker-tags
+                       cap/parse)]
+
+      (r/failed? parse-r)
+      (c/abort 1 (:message parse-r))
+
+      :else
+      (println (cap/rebuild parse-r)))))
