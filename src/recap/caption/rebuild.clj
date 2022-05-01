@@ -27,14 +27,6 @@
          (-> cue :lines count dec))
       (recur rest-lines (+ cnt (count line))))))
 
-(defn join-cues
-  "Combine the given cues into one, having just a single line of content."
-  [cues]
-  {:start (-> cues first :start)
-   :end (-> cues last :end)
-   :lines [(str/join " " (mapv #(->> % :lines (str/join " "))
-                               cues))]})
-
 (defn clause-ender?
   [text]
   (boolean (re-find (:ends-in-clause-ending-punctuation default-opts) text)))

@@ -2,6 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
+            [recap.cue :as cue]
             [recap.caption.utils :as capu]
             [recap.caption.rebuild :as rebuild]
             [utils.common :as u]
@@ -10,15 +11,8 @@
 
 
 (s/def ::prelude (s/coll-of string?))
-(s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]\d+" %))
-(s/def ::start ::duration)
-(s/def ::end ::duration)
-(s/def ::lines (s/coll-of string?))
-(s/def ::cue (s/keys :req-un [::start ::end ::lines]))
-(s/def ::cues (s/coll-of ::cue))
+(s/def ::cues (s/coll-of ::cue/cue))
 (s/def ::caption (s/keys :opt-un [::prelude ::cues]))
-
-
 
 (s/fdef empty-caption?
         :args (s/cat :caption ::caption)
@@ -29,7 +23,8 @@
   [caption]
   (or (nil? caption)
       (empty? caption)
-      (empty? (:cues caption))))
+      (empty? (:cues caption))
+      (every? cue/empty-cue? (:cues caption))))
 
 
 
@@ -66,7 +61,7 @@
            :cues cues})
         (if (= scanning-for :time-range)
           ;; Scan for line specifying time range:
-          (let [time-range (capu/parse-time-range line)]
+          (let [time-range (cue/parse-time-range line)]
             (if (empty? time-range)
               (if captured-prelude?
                 (recur rest-lines
@@ -116,9 +111,7 @@
   "Convert the given captions to a plain string.
 
   * `collapse-cue-lines?`
-    * Whether to join separate lines in a cue into one (space-delimited)
-
-  Returns a string."
+    * Whether to join separate lines in a cue into one (space-delimited)"
   [caption & {:keys [collapse-cue-lines?]}]
   (loop [[cue & rest-cues] (:cues caption)
          cue-idx 1
@@ -137,11 +130,7 @@
                   (if (empty? (:prelude caption))
                     (str cue-idx "\n")
                     "")
-                  (:start cue) " --> " (:end cue) "\n"
-                  (if (:lines cue)
-                    (str/join (if collapse-cue-lines? " " "\n")
-                              (:lines cue))
-                    (:line cue))
+                  (cue/to-string cue :collapse-cue-lines? collapse-cue-lines?)
                   "\n")))))
 
 
@@ -256,14 +245,14 @@
       (if (empty? rest-input-cues)
         (-> caption
             (assoc :cues
-                   (conj final-cues (rebuild/join-cues [wip-cue curr-input-cue])))
+                   (conj final-cues (cue/join-cues [wip-cue curr-input-cue])))
             to-string)
         (if (rebuild/start-new-cue? wip-cue curr-input-cue opts)
           (recur rest-input-cues
                  curr-input-cue
                  (conj final-cues wip-cue))
           (recur rest-input-cues
-                 (rebuild/join-cues [wip-cue curr-input-cue])
+                 (cue/join-cues [wip-cue curr-input-cue])
                  final-cues))))))
 
 
@@ -277,10 +266,10 @@
                 slurp
                 strip-contiguous-speaker-tags
                 parse))
-  (rebuild/join-cues (->> "tmp/one-word.srt"
-                          slurp
-                          strip-contiguous-speaker-tags
-                          parse
-                          :cues
-                          (take 3)))
+  (cue/join-cues (->> "tmp/one-word.srt"
+                      slurp
+                      strip-contiguous-speaker-tags
+                      parse
+                      :cues
+                      (take 3)))
   (rebuild caps))
