@@ -109,3 +109,22 @@
   (or (failed? obj)
       (= :warn (:level obj))))
 
+(defn prepend-msg
+  [result msg]
+  (assoc result :message (str msg (:message result))))
+
+(s/fdef print-msg
+        :args (s/cat :result ::result)
+        :ret nil?)
+(defn print-msg
+  "Prints the message of the given result to stdout or stderr accordingly.
+  No printing is done if the message is empty."
+  [result] (when (not (empty? (or (:message result) "")))
+             (if (success? result)
+               (println (:message result))
+               (binding [*out* *err*]
+                 (println (:message result))))))
+
+
+(comment
+  (prepend-msg (r :info "original") "prepended - "))

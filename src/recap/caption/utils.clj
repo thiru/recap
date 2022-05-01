@@ -10,8 +10,8 @@
 (defn get-speaker-tag
   "Find speaker tag in the given text.
 
-  A speaker tag is considered to be the text that indentifies of a speaker. It
-  should be some capitalised text followed by a colon, at the start of a cue.
+  A speaker tag is taken to be the text that indentifies a speaker. It should
+  be some capitalised text followed by a colon, at the start of a cue.
 
   Returns the speaker tag (including the colon) if found, otherwise `nil`."
   [text]

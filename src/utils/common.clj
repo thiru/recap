@@ -31,19 +31,18 @@
 
 
 
-(s/fdef abort
-        :args (s/cat :exit-code (s/and int? non-neg?)
-                     :msg any?)
+(s/fdef exit!
+        :args (s/cat :result ::r/result)
         :ret nil?)
 
-(defn abort
-  "Abort app with the given exit code and message."
-  [exit-code msg]
-  (if (zero? exit-code)
-    (println msg)
-    (binding [*out* *err*]
-      (println msg)))
-  (System/exit exit-code))
+(defn exit!
+  "Exit app with a success/failure exit code based on the given result.
+  The result's message is also printed to stdout or stderr as appropriate."
+  [result]
+  (r/print-msg result)
+  (System/exit (case (:level result)
+                 (:success :trace :info :warn :debug) 0
+                 1)))
 
 
 
@@ -66,8 +65,8 @@
 
 (s/fdef slurp-file
         :args (s/cat :file-path string?)
-        :ret (s/or :string string?
-                   :result :r/result))
+        :ret (s/or :content string?
+                   :error-result :r/result))
 
 (defn slurp-file
   "Read all contents of the given file.
@@ -122,7 +121,7 @@
 
 (s/fdef duration->secs
         :args (s/cat :duration string?)
-        :ret (s/or :integer int? :result :r/result))
+        :ret (s/or :seconds int? :error-result :r/result))
 
 (defn duration->secs
   "Parse the given duration string to a total number of seconds.

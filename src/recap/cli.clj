@@ -60,81 +60,84 @@
 
 
 
-(s/fdef action!
+(s/fdef run-cmd
         :args (s/cat :cli-r ::parse-r)
-        :ret nil?)
+        :ret ::r/result)
 
-(defn action!
+(defn run-cmd
   "Action the specified CLI command."
   [parse-r]
   (when (r/failed? parse-r)
-    (c/abort 1 (:message parse-r)))
+    (c/exit! parse-r))
 
   (case (:cmd-name parse-r)
-    :help (println help)
+    :help
+    (r/r :success help)
 
-    :version (println version)
+    :version
+    (r/r :success version)
 
     :contiguous
     (b/cond
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (c/abort 1 (str "Attempt to parse captions failed: " (:message slurp-r)))
+      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
 
       :else
-      (println (cap/strip-contiguous-speaker-tags slurp-r)))
+      (r/r :success (cap/strip-contiguous-speaker-tags slurp-r)))
 
     :overlap
     (b/cond
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (c/abort 1 (str "Attempt to parse captions failed: " (:message slurp-r)))
+      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
 
       let [parse-r (cap/parse slurp-r)]
 
       (r/failed? parse-r)
-      (c/abort 1 (:message parse-r))
+      parse-r
 
       :else
       (let [indeces (cap/find-overlapping-cues (:cues parse-r))]
         (if (empty? indeces)
-          (println "No overlapping cues found")
-          (println (c/fmt ["Found %d overlapping cue(s) at the following "
-                           "positions:\n%s"]
-                          (count indeces)
-                          (str/join ", " indeces))))))
+          (r/r :success "No overlapping cues found")
+          (r/r :success (c/fmt ["Found %d overlapping cue(s) at the following "
+                                "positions:\n%s"]
+                               (count indeces)
+                               (str/join ", " indeces))))))
 
     :parse
     (b/cond
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (c/abort 1 (str "Attempt to parse captions failed: " (:message slurp-r)))
+      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
 
       let [parse-r (cap/parse slurp-r)]
 
       (r/failed? parse-r)
-      (c/abort 1 (:message parse-r))
+      parse-r
 
       :else
-      (puget/cprint parse-r))
+      (puget/cprint parse-r)
+      (r/r :success ""))
 
     :rebuild
     (b/cond
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (c/abort 1 (str "Attempt to parse captions failed: " (:message slurp-r)))
+      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
 
       let [parse-r (-> slurp-r
                        cap/strip-contiguous-speaker-tags
                        cap/parse)]
 
       (r/failed? parse-r)
-      (c/abort 1 (:message parse-r))
+      parse-r
 
       :else
-      (println (cap/rebuild parse-r)))))
+      (r/r :success (cap/rebuild parse-r)))))
 
