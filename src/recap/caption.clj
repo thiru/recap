@@ -10,9 +10,9 @@
 
 
 
-(s/def ::prelude (s/coll-of string?))
+(s/def ::header (s/coll-of string?))
 (s/def ::cues (s/coll-of ::cue/cue))
-(s/def ::caption (s/keys :opt-un [::prelude ::cues]))
+(s/def ::caption (s/keys :opt-un [::header ::cues]))
 
 (s/fdef empty-caption?
         :args (s/cat :caption ::caption)
@@ -48,35 +48,35 @@
 
     :else
     (loop [[line & rest-lines] lines
-           captured-prelude? false
-           prelude []
+           captured-header? false
+           header []
            scanning-for :time-range
            cues []]
       (if (and (empty? line) (empty? rest-lines))
-        ;; Ignore prelude if empty or is not separated by an empty line from
+        ;; Ignore header if empty or is not separated by an empty line from
         ;; the cues
-        (let [prelude? (and (not (empty? prelude))
-                            (-> prelude last empty?))]
-          {:prelude (if prelude? prelude [])
+        (let [header? (and (not (empty? header))
+                           (-> header last empty?))]
+          {:header (if header? header [])
            :cues cues})
         (if (= scanning-for :time-range)
           ;; Scan for line specifying time range:
           (let [time-range (cue/parse-time-range line)]
             (if (empty? time-range)
-              (if captured-prelude?
+              (if captured-header?
                 (recur rest-lines
                        true
-                       prelude
+                       header
                        :time-range
                        cues)
                 (recur rest-lines
                        false
-                       (conj prelude line)
+                       (conj header line)
                        :time-range
                        cues))
               (recur rest-lines
                      true
-                     prelude
+                     header
                      :content
                      (conj cues time-range))))
           ;; Otherwise we scan for content/cues:
@@ -84,14 +84,14 @@
             (if (str/blank? content)
               (recur rest-lines
                      true
-                     prelude
+                     header
                      :time-range
                      cues)
               (let [total-cues (count cues)
                     cue-to-update (last cues)]
                 (recur rest-lines
                        true
-                       prelude
+                       header
                        :content
                        (assoc cues
                               (dec total-cues)
@@ -117,17 +117,17 @@
          cue-idx 1
          cue-text ""]
     (if (and (empty? cue) (empty? rest-cues))
-      (-> (if (not (empty? (:prelude caption)))
-            (str/join "\n" (:prelude caption))
+      (-> (if (not (empty? (:header caption)))
+            (str/join "\n" (:header caption))
             "")
           (str cue-text)
           str/trim)
       (recur rest-cues
              (inc cue-idx)
              (str cue-text "\n"
-                  ;; NOTE: assuming that a `caption` without a prelude is of
+                  ;; NOTE: assuming that a `caption` without a header is of
                   ;; SRT format, and so requires numbered cues.
-                  (if (empty? (:prelude caption))
+                  (if (empty? (:header caption))
                     (str cue-idx "\n")
                     "")
                   (cue/to-string cue :collapse-cue-lines? collapse-cue-lines?)
