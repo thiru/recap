@@ -64,7 +64,8 @@
 
 (s/fdef parse-time-range
         :args (s/cat :input string?)
-        :ret (s/keys :req-un [::start ::end]))
+        :ret (s/or :invalid (s/and empty? map?)
+                   :valid (s/keys :req-un [::start ::end])))
 
 (defn parse-time-range
   [input]

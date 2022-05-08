@@ -41,64 +41,85 @@
     (str/blank? input)
     {}
 
-    let [lines (str/split-lines input)]
+    let [lines (-> input str/trim str/split-lines)]
 
     (empty? lines)
     {}
 
     :else
     (loop [[line & rest-lines] lines
-           captured-header? false
+           scanning-for :header
            header []
-           scanning-for :time-range
            cues []]
-      (if (and (empty? line) (empty? rest-lines))
+      (b/cond
+        let [eof? (and (empty? line) (empty? rest-lines))]
+
+        eof?
         ;; Ignore header if empty or is not separated by an empty line from
         ;; the cues
-        (let [header? (and (not (empty? header))
-                           (-> header last empty?))]
-          {:header (if header? header [])
+        (let [empty-header? (or (empty? header)
+                                (empty? (last header)))]
+          {:header (if empty-header? [] header)
            :cues cues})
-        (if (= scanning-for :time-range)
-          ;; Scan for line specifying time range:
-          (let [time-range (cue/parse-time-range line)]
-            (if (empty? time-range)
-              (if captured-header?
-                (recur rest-lines
-                       true
-                       header
-                       :time-range
-                       cues)
-                (recur rest-lines
-                       false
-                       (conj header line)
-                       :time-range
-                       cues))
-              (recur rest-lines
-                     true
-                     header
-                     :content
-                     (conj cues time-range))))
-          ;; Otherwise we scan for content/cues:
-          (let [content line]
-            (if (str/blank? content)
-              (recur rest-lines
-                     true
-                     header
-                     :time-range
-                     cues)
-              (let [total-cues (count cues)
-                    cue-to-update (last cues)]
-                (recur rest-lines
-                       true
-                       header
-                       :content
-                       (assoc cues
-                              (dec total-cues)
-                              (assoc cue-to-update
-                                     :lines (conj (or (:lines cue-to-update)
-                                                      [])
-                                                  line))))))))))))
+
+        let [cue-idx (u/parse-int line -1)
+             time-range (cue/parse-time-range line)]
+
+        (= scanning-for :header)
+        (cond
+          (str/blank? line)
+          (recur rest-lines
+                 :time-range
+                 header
+                 ;; Start new cue with time-range alone (no content yet):
+                 (conj cues time-range))
+
+          (pos-int? cue-idx)
+          (recur rest-lines
+                 :time-range
+                 header
+                 ;; Ignore cue indices
+                 cues)
+
+          ;; This must be a legitimate header line at this point:
+          :else
+          (recur rest-lines
+                 :header
+                 (conj header line)
+                 cues))
+
+        (= scanning-for :time-range)
+        (if (empty? time-range)
+          ;; Keep looking for the next time-range. One likely possibility is
+          ;; that this line is a cue index (which we ignore)
+          (recur rest-lines
+                 :time-range
+                 header
+                 cues)
+          (recur rest-lines
+                 :content
+                 header
+                 ;; Start new cue with time-range alone (no content yet):
+                 (conj cues time-range)))
+
+        ;; Otherwise we scan for content/cues:
+        (= scanning-for :content)
+        (if (str/blank? line)
+          (recur rest-lines
+                 :time-range
+                 header
+                 cues)
+          (recur rest-lines
+                 :content
+                 header
+                 (update cues
+                         (dec (count cues))
+                         #(assoc % :lines (conj (or (:lines %) [])
+                                                line)))))
+
+        :else
+        (throw (ex-info "This shouldn't happen (else clause of outter cond)"
+                        {:line line}))))))
 
 
 
@@ -258,8 +279,8 @@
 
 
 (comment
+  (-> "tmp/captions.srt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse)
-  (-> "tmp/captions.vtt" slurp parse to-string println)
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
   (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println)
   (def caps (-> "tmp/one-word.srt"
@@ -272,4 +293,4 @@
                       parse
                       :cues
                       (take 3)))
-  (rebuild caps))
+  (-> caps rebuild println))
