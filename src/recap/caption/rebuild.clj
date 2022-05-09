@@ -9,7 +9,8 @@
 (def default-opts {:absolute-max-chars-per-line 65
                    :breakable-clause-ender-min-chars 18
                    :breakable-any-punctuation-min-chars 23
-                   :ends-in-any-punctuation #"[.!?;:,—–-]['\"]?$"
+                   ;; Same as `:ends-in-clause-ending-punctuation` but adds a comma
+                   :ends-in-any-punctuation #"[,.!?;:—–-]['\"]?$"
                    :ends-in-clause-ending-punctuation #"[.!?;:—–-]['\"]?$"
                    :force-new-cue-tolerance-seconds 3
                    :ideal-max-chars-per-line 35})
@@ -55,16 +56,16 @@
 
     ;; Break line if the current cue ends in a clause-ending punctuation mark
     ;; and the minimum number of chars for this is reached
-    (and (<= (:breakable-clause-ender-min-chars opts)
-             wip-cue-char-count)
+    (and (>= wip-cue-char-count
+             (:breakable-clause-ender-min-chars opts))
          (clause-ender? (-> wip-cue :lines last)))
     true
 
     ;; Break line if the current cue ends in any punctuation mark and the next
     ;; word does not end in a punctuation mark, while the minimum number of
     ;; chars for this is reached
-    (and (<= (:breakable-any-punctuation-min-chars opts)
-             wip-cue-char-count)
+    (and (>= wip-cue-char-count
+             (:breakable-any-punctuation-min-chars opts))
          (punctuation-ender? (-> wip-cue :lines last))
          (not (punctuation-ender? (-> next-cue :lines last))))
     true
