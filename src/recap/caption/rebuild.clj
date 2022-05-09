@@ -10,8 +10,8 @@
                    :breakable-clause-ender-min-chars 18
                    :breakable-any-punctuation-min-chars 23
                    ;; Same as `:ends-in-clause-ending-punctuation` but adds a comma
-                   :ends-in-any-punctuation #"[,.!?;:—–-]['\"]?$"
-                   :ends-in-clause-ending-punctuation #"[.!?;:—–-]['\"]?$"
+                   :ends-in-any-punctuation #"[,.!?;:\]—–-]['\"]?$"
+                   :ends-in-clause-ending-punctuation #"[.!?;:\]—–-]['\"]?$"
                    :force-new-cue-tolerance-seconds 3
                    :ideal-max-chars-per-line 35})
 
