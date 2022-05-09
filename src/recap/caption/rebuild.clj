@@ -50,8 +50,10 @@
                                                next-cue-char-count))
     true
 
-    ;; Avoid lines starting with a single word ending in a punctuation mark
-    (punctuation-ender? (-> next-cue :lines last))
+    ;; Avoid lines starting with a single word ending in a punctuation mark,
+    ;; unless previous line ends in a clause-ending punctuation mark
+    (and (punctuation-ender? (-> next-cue :lines last))
+         (not (clause-ender? (-> wip-cue :lines last))))
     false
 
     ;; Break line if the current cue ends in a clause-ending punctuation mark
