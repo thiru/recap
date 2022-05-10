@@ -5,7 +5,8 @@
 
 (s/fdef get-speaker-tag
         :args (s/cat :text string?)
-        :ret string?)
+        :ret (s/or :found string?
+                   :not-found nil?))
 
 (defn get-speaker-tag
   "Find speaker tag in the given text.
@@ -18,7 +19,7 @@
   Returns the speaker tag (including the colon) if found, otherwise `nil`."
   [text]
   (some->> text
-           (re-find #"^([A-Z][\w-]*)(\s+[A-Z][\w-]*)?(:)")
+           (re-find #"^([A-Z][\w-]*)(\s+[\w-]*)?(:)")
            first))
 
 
@@ -28,6 +29,7 @@
   (get-speaker-tag "Bob: hello")
   (get-speaker-tag "Bob-Tim: hello")
   (get-speaker-tag "Bob Tim: hello")
+  (get-speaker-tag "Bob tim: hello")
   (get-speaker-tag "Bob Tim Li: hello")
   (get-speaker-tag "Hi, Bob: hello"))
 

@@ -211,6 +211,22 @@
 
 
 
+(s/fdef distinct-speaker-tags
+        :args (s/cat :caption ::caption)
+        :ret (s/coll-of string?))
+
+(defn distinct-speaker-tags
+  [caption]
+  (some->> caption
+           :cues
+           (mapv :lines)
+           flatten
+           (mapv capu/get-speaker-tag)
+           (remove nil?)
+           distinct))
+
+
+
 (s/fdef strip-contiguous-speaker-tags
         :args (s/cat :input string?)
         :ret string?)
@@ -283,7 +299,8 @@
   (-> "tmp/captions.vtt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
   (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println)
-  (def caps (-> "tmp/one-word.srt"
+  (-> "tmp/one-word-full.vtt" slurp parse distinct-speaker-tags)
+  (def caps (-> "tmp/one-word-full.vtt"
                 slurp
                 strip-contiguous-speaker-tags
                 parse))
@@ -293,4 +310,4 @@
                       parse
                       :cues
                       (take 3)))
-  (-> caps rebuild println))
+  (->> caps rebuild (spit "tmp/rebuilt.srt")))
