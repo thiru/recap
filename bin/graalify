@@ -29,6 +29,7 @@ clojure -M -e "(compile 'recap.main)"
   --verbose \
   --no-fallback \
   --no-server \
+  --report-unsupported-elements-at-runtime \
   "-J-Xmx16g" \
   recap.main
 
@@ -48,6 +49,10 @@ clojure -M -e "(compile 'recap.main)"
 # --no-server
 # Without this GraalVM will start a backgroud server that will be used next
 # time
+
+# --report-unsupported-elements-at-runtime
+# Added this to help diagnose a build error but it seems to have fixed the
+# error altogether.
 
 # "-J-Xmx16g"
 # Limit GraalVM to the specified amount of RAM. More memory results in faster
