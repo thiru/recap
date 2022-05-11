@@ -72,8 +72,10 @@
          (not (punctuation-ender? (-> next-cue :lines last))))
     true
 
-    let [wip-cue-is-opener? (re-find #"^['\[]" (-> wip-cue :lines first))
-         wip-cue-is-closer? (re-find #"['\]],?$" (-> wip-cue :lines last))]
+    let [wip-cue-is-opener? (re-find #"^['\[]"
+                                     (-> wip-cue :lines first (or "")))
+         wip-cue-is-closer? (re-find #"['\]],?$"
+                                     (-> wip-cue :lines last (or "")))]
 
     ;; Avoid lines starting with a single dangling word that ends a quote or
     ;; bracket:
