@@ -3,6 +3,9 @@
 
 
 
+(declare get-speaker-tag-srt
+         get-speaker-tag-webvtt)
+
 (s/fdef get-speaker-tag
         :args (s/cat :text string?)
         :ret (s/or :found string?
@@ -18,18 +21,29 @@
 
   Returns the speaker tag (including the colon) if found, otherwise `nil`."
   [text]
-  (some->> text
-           (re-find #"^([A-Z][\w-]*)(\s+[\w-]*)?(:)")
-           first))
+  (or (get-speaker-tag-webvtt text)
+      (get-speaker-tag-srt text)))
 
+
+(defn get-speaker-tag-srt
+  [text]
+  (->> text
+       (re-find #"^([A-Z][\w-]*)(\s+[\w-]*)?(:)")
+       first))
+
+(defn get-speaker-tag-webvtt
+  [text]
+  (when text
+    (re-find #"^<v\s+.+>" text)))
 
 
 (comment
   (get-speaker-tag "Q1: hello")
-  (get-speaker-tag "Bob: hello")
-  (get-speaker-tag "Bob-Tim: hello")
-  (get-speaker-tag "Bob Tim: hello")
-  (get-speaker-tag "Bob tim: hello")
-  (get-speaker-tag "Bob Tim Li: hello")
-  (get-speaker-tag "Hi, Bob: hello"))
+  (get-speaker-tag "Al: hello")
+  (get-speaker-tag "Al-Bob: hello")
+  (get-speaker-tag "Al Bob: hello")
+  (get-speaker-tag "Al bob: hello")
+  (get-speaker-tag "Al bob cate: hello")
+  (get-speaker-tag "<v Al bob cate:> hello")
+  (get-speaker-tag "Hi, Al: hello"))
 
