@@ -34,7 +34,7 @@
 (defn get-speaker-tag-webvtt
   [text]
   (when text
-    (re-find #"^<v\s+.+>" text)))
+    (re-find #"^<v\s+[^>]+>" text)))
 
 
 (comment
