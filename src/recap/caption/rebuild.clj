@@ -2,6 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
+            [recap.caption.utils :as capu]
             [utils.common :as u]))
 
 
@@ -41,6 +42,13 @@
   new cue at `wip-cue`."
   [wip-cue next-cue opts]
   (b/cond
+    let [wip-cue-text (-> wip-cue :lines last (or ""))
+         next-cue-text (-> next-cue :lines last (or ""))]
+
+    ;; Always start a new line on speaker tag
+    (capu/get-speaker-tag next-cue-text)
+    true
+
     let [wip-cue-char-count (cue-char-count wip-cue)
          next-cue-char-count (cue-char-count next-cue)]
 
@@ -52,15 +60,15 @@
 
     ;; Avoid lines starting with a single word ending in a punctuation mark,
     ;; unless previous line ends in a clause-ending punctuation mark
-    (and (punctuation-ender? (-> next-cue :lines last))
-         (not (clause-ender? (-> wip-cue :lines last))))
+    (and (punctuation-ender? next-cue-text)
+         (not (clause-ender? wip-cue-text)))
     false
 
     ;; Break line if the current cue ends in a clause-ending punctuation mark
     ;; and the minimum number of chars for this is reached
     (and (>= wip-cue-char-count
              (:breakable-clause-ender-min-chars opts))
-         (clause-ender? (-> wip-cue :lines last)))
+         (clause-ender? wip-cue-text))
     true
 
     ;; Break line if the current cue ends in any punctuation mark and the next
@@ -68,14 +76,12 @@
     ;; chars for this is reached
     (and (>= wip-cue-char-count
              (:breakable-any-punctuation-min-chars opts))
-         (punctuation-ender? (-> wip-cue :lines last))
+         (punctuation-ender? wip-cue-text)
          (not (punctuation-ender? (-> next-cue :lines last))))
     true
 
-    let [wip-cue-is-opener? (re-find #"^['\[]"
-                                     (-> wip-cue :lines first (or "")))
-         wip-cue-is-closer? (re-find #"['\]],?$"
-                                     (-> wip-cue :lines last (or "")))]
+    let [wip-cue-is-opener? (re-find #"^['\[]" wip-cue-text)
+         wip-cue-is-closer? (re-find #"['\]],?$" wip-cue-text)]
 
     ;; Avoid lines starting with a single dangling word that ends a quote or
     ;; bracket:
