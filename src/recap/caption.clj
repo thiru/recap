@@ -62,31 +62,21 @@
           {:header (if empty-header? [] header)
            :cues cues})
 
-        let [cue-idx (u/parse-int line -1)
-             time-range (cue/parse-time-range line)]
-
         (= scanning-for :header)
-        (cond
-          (str/blank? line)
-          (recur rest-lines
-                 :time-range
-                 header
-                 ;; Start new cue with time-range alone (no content yet):
-                 (conj cues time-range))
+        (let [cue-idx (u/parse-int line -1)
+              header? (and (not (str/blank? line))
+                           (not (pos-int? cue-idx)))]
+          (if header?
+            (recur rest-lines
+                   :header
+                   (conj header line)
+                   cues)
+            (recur rest-lines
+                   :time-range
+                   header
+                   cues)))
 
-          (pos-int? cue-idx)
-          (recur rest-lines
-                 :time-range
-                 header
-                 ;; Ignore cue indices
-                 cues)
-
-          ;; This must be a legitimate header line at this point:
-          :else
-          (recur rest-lines
-                 :header
-                 (conj header line)
-                 cues))
+        let [time-range (cue/parse-time-range line)]
 
         (= scanning-for :time-range)
         (if (empty? time-range)
