@@ -129,7 +129,8 @@
          cue-text ""]
     (if (and (empty? cue) (empty? rest-cues))
       (-> (if (not (empty? (:header caption)))
-            (str/join "\n" (:header caption))
+            (str (str/join "\n" (:header caption))
+                 "\n")
             "")
           (str cue-text)
           str/trim)
