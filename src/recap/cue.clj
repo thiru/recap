@@ -2,7 +2,9 @@
   "Encapsulates a cue in a caption."
   (:require [better-cond.core :as b]
             [clojure.spec.alpha :as s]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [utils.common :as c]
+            [utils.results :as r]))
 
 
 
@@ -25,6 +27,33 @@
       (empty? cue)
       (empty? (:lines cue))
       (every? str/blank? (:lines cue))))
+
+
+
+(s/fdef total-secs
+        :args (s/cat :cue ::cue)
+        :ret (s/or :seconds float? :error-result :r/result))
+
+(defn total-secs
+  "Get the total number of seconds spanning the given cue."
+  [cue]
+  (b/cond
+    (empty? cue)
+    0
+
+    let [start-dur-r (-> cue :start (str/replace #"," ".") c/duration->secs)]
+
+    (r/failed? start-dur-r)
+    (r/prepend-msg start-dur-r (format "Start time of cue (%s) is invalid. "
+                                       (:start cue)))
+
+    let [end-dur-r (-> cue :end (str/replace #"," ".") c/duration->secs)]
+
+    (r/failed? end-dur-r)
+    (r/prepend-msg end-dur-r (format "End time of cue (%s) is invalid. "
+                                     (:end cue)))
+
+    (- end-dur-r start-dur-r)))
 
 
 
@@ -91,9 +120,10 @@
   (empty-cue? {:lines []})
   (empty-cue? {:lines ["" " "]})
   (empty-cue? {:lines ["a"]})
-  (def cue {:start "00:01:00"
-            :end "00:02:00"
+  (def cue {:start "00:01:00.500"
+            :end "00:02:10,700"
             :lines ["first line" "second line"]})
+  (total-secs cue)
   (println (to-string cue))
   (println (to-string cue :collapse-cue-lines? true))
   (join-cues [cue {:start "00:02:00"

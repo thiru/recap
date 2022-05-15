@@ -121,12 +121,10 @@
 
 (s/fdef duration->secs
         :args (s/cat :duration string?)
-        :ret (s/or :seconds int? :error-result :r/result))
+        :ret (s/or :seconds float? :error-result :r/result))
 
 (defn duration->secs
-  "Parse the given duration string to a total number of seconds.
-
-  Returns the total number of seconds if successful, otherwise a `:r/result`."
+  "Parse the given duration string to a total number of seconds."
   [duration]
   (b/cond
     (str/blank? duration)
@@ -161,3 +159,33 @@
 
     :else
     total-secs))
+
+
+
+(s/fdef millis->duration
+        :args (s/cat :millis int?
+                     :show-millis? boolean?)
+        :ret (s/or :duration string?))
+
+(defn millis->duration
+  "Convert the given milliseconds to a duration."
+  [millis & {:keys [show-millis?]}]
+  (when (not (number? millis))
+    (throw (ex-info "Input must be a number specifying milliseconds"
+                    {:millis millis})))
+
+  (if (or (nil? millis) (zero? millis))
+    "00:00:00"
+    (let [duration (java.time.Duration/ofMillis millis)
+          hours (.toHoursPart duration)
+          minutes (.toMinutesPart duration)
+          seconds (.toSecondsPart duration)
+          milliseconds (.toMillisPart duration)]
+      (str (format "%02d:%02d:%02d"
+               hours
+               minutes
+               seconds)
+           (if show-millis?
+             (format ".%03d" milliseconds)
+             "")))))
+

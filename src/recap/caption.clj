@@ -291,6 +291,9 @@
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
   (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println)
   (-> "tmp/one-word-full.vtt" slurp parse distinct-speaker-tags)
+  (->> "tmp/linger-test.vtt" slurp parse rebuild/linger-cues
+       to-string
+       (spit "tmp/linger-test-rebuilt.vtt"))
   (def caps (-> "tmp/one-word-full.vtt"
                 slurp
                 strip-contiguous-speaker-tags
@@ -301,4 +304,4 @@
                       parse
                       :cues
                       (take 3)))
-  (->> caps rebuild (spit "tmp/rebuilt.srt")))
+  (->> caps rebuild (spit "tmp/rebuilt.vtt")))
