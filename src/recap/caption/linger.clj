@@ -65,20 +65,18 @@
                    rest-cues
                    (conj new-cues prev-cue)))
 
-        let [curr-cue-start-secs (u/duration->secs (:start curr-cue))]
+        let [gap-to-curr-cue (cue/gap-inbetween prev-cue curr-cue)]
 
-        (r/failed? prev-cue-end-secs)
+        (r/failed? gap-to-curr-cue)
         (do (r/print-msg
-              (r/prepend-msg curr-cue-start-secs
-                             (u/fmt ["Cue has an invalid start duration: %s. "
-                                     "Skipping ahead. "
-                                     (:start curr-cue)])))
+              (r/prepend-msg gap-to-curr-cue
+                             (str "Failed to determine gap between cues. "
+                                  "Skipping ahead. ")))
             (recur curr-cue
                    rest-cues
                    (conj new-cues prev-cue)))
 
-        let [gap-to-curr-cue (- curr-cue-start-secs prev-cue-end-secs)
-             has-gap? (pos? gap-to-curr-cue)]
+        let [has-gap? (pos? gap-to-curr-cue)]
 
         (not has-gap?)
         (recur curr-cue

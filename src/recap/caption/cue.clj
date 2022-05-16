@@ -89,6 +89,33 @@
 
 
 
+(s/fdef gap-inbetween
+        :args (s/cat :cue1 ::dspecs/cue :cue2 ::dspecs/cue)
+        :ret (s/or :seconds float? :error-result ::r/result))
+
+(defn gap-inbetween
+  "Get the number of seconds between the two cues."
+  [cue1 cue2]
+  (b/cond
+    let [cue1-end-secs (c/duration->secs (:end cue1))]
+
+    (r/failed? cue1-end-secs)
+    (r/prepend-msg cue1-end-secs
+                   (format "First cue has an invalid end duration: %s. "
+                           (:end cue1)))
+
+    let [cue2-start-secs (c/duration->secs (:start cue2))]
+
+    (r/failed? cue2-start-secs)
+    (r/prepend-msg cue2-start-secs
+                   (format "Second cue has an invalid start duration: %s. "
+                           (:start cue2)))
+
+    :else
+    (- cue2-start-secs cue1-end-secs)))
+
+
+
 (s/fdef join-cues
         :args (s/cat :cues (s/coll-of ::dspecs/cue))
         :ret ::dspecs/cue)
