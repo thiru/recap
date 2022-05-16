@@ -8,7 +8,6 @@
             [utils.results :as r]))
 
 
-
 (s/fdef empty-cue
         :args (s/cat :cue ::dspecs/cue)
         :ret boolean?)
@@ -34,9 +33,32 @@
          cnt 0]
     (if (nil? rest-lines)
       (+ cnt (count line)
-         ;; Count lines as a newline chars:
+         ;; Count newline chars:
          (-> cue :lines count dec))
       (recur rest-lines (+ cnt (count line))))))
+
+
+
+(s/fdef parse-time-range
+        :args (s/cat :input string?)
+        :ret (s/or :invalid (s/and empty? map?)
+                   :valid (s/keys :req-un [::dspecs/start ::dspecs/end])))
+
+(defn parse-time-range
+  [input]
+  (b/cond
+    (str/blank? input)
+    {}
+
+    let [matches (re-matches #"(\d\d:\d\d:\d\d[,.]\d+)\s+-+>\s+(\d\d:\d\d:\d\d[,.]\d+)"
+                             input)]
+
+    (or (empty? matches)
+        (not= 3 (count matches)))
+    {}
+
+    {:start (str/replace (second matches) "," ".")
+     :end (str/replace (last matches) "," ".")}))
 
 
 
@@ -67,6 +89,20 @@
 
 
 
+(s/fdef join-cues
+        :args (s/cat :cues (s/coll-of ::dspecs/cue))
+        :ret ::dspecs/cue)
+
+(defn join-cues
+  "Combine the given cues into one, having just a single line of content."
+  [cues]
+  {:start (-> cues first :start)
+   :end (-> cues last :end)
+   :lines [(str/join " " (mapv #(->> % :lines (str/join " "))
+                               cues))]})
+
+
+
 (s/fdef to-string
         :args (s/cat :cue ::dspecs/cue
                      :collapse-cue-lines? boolean?)
@@ -84,43 +120,6 @@
          (str/join (if collapse-cue-lines? " " "\n")
                    (:lines cue))
          (:line cue))))
-
-
-
-(s/fdef join-cues
-        :args (s/cat :cues (s/coll-of ::dspecs/cue))
-        :ret ::dspecs/cue)
-
-(defn join-cues
-  "Combine the given cues into one, having just a single line of content."
-  [cues]
-  {:start (-> cues first :start)
-   :end (-> cues last :end)
-   :lines [(str/join " " (mapv #(->> % :lines (str/join " "))
-                               cues))]})
-
-
-
-(s/fdef parse-time-range
-        :args (s/cat :input string?)
-        :ret (s/or :invalid (s/and empty? map?)
-                   :valid (s/keys :req-un [::dspecs/start ::dspecs/end])))
-
-(defn parse-time-range
-  [input]
-  (b/cond
-    (str/blank? input)
-    {}
-
-    let [matches (re-matches #"(\d\d:\d\d:\d\d[,.]\d+)\s+-+>\s+(\d\d:\d\d:\d\d[,.]\d+)"
-                             input)]
-
-    (or (empty? matches)
-        (not= 3 (count matches)))
-    {}
-
-    {:start (str/replace (second matches) "," ".")
-     :end (str/replace (last matches) "," ".")}))
 
 
 

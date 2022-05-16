@@ -2,6 +2,7 @@
   "Core data-specs around captions."
   (:require [clojure.spec.alpha :as s]))
 
+
 (s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]\d+" %))
 
 (s/def ::start ::duration)

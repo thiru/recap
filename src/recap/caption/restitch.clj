@@ -7,9 +7,7 @@
             [utils.common :as u]))
 
 
-
 (declare start-new-cue?)
-
 
 
 (def default-opts
@@ -130,7 +128,6 @@
     :else
     (<= (:ideal-max-chars-per-line opts)
         wip-cue-char-count)))
-
 
 
 (comment
