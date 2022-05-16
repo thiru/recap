@@ -4,18 +4,16 @@
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.rebuild :as rebuild]
+            [recap.caption.specs :as spec]
             [recap.caption.utils :as capu]
             [utils.common :as u]
             [utils.results :as r]))
 
 
 
-(s/def ::header (s/coll-of string?))
-(s/def ::cues (s/coll-of ::cue/cue))
-(s/def ::caption (s/keys :opt-un [::header ::cues]))
 
 (s/fdef empty-caption?
-        :args (s/cat :caption ::caption)
+        :args (s/cat :caption ::spec/caption)
         :ret boolean?)
 
 (defn empty-caption?
@@ -30,7 +28,7 @@
 
 (s/fdef parse
         :args (s/cat :input string?)
-        :ret ::caption)
+        :ret ::spec/caption)
 
 (defn parse
   "Parse the given captions text into a Clojure data structure.
@@ -114,7 +112,7 @@
 
 
 (s/fdef to-string
-        :args (s/cat :caption ::caption
+        :args (s/cat :caption ::spec/caption
                      :collapse-cue-lines? any?)
         :ret string?)
 
@@ -148,7 +146,7 @@
 
 
 (s/fdef find-overlapping-cues
-        :args (s/cat :cues ::cues)
+        :args (s/cat :cues ::spec/cues)
         :ret (s/coll-of int?))
 
 (defn find-overlapping-cues
@@ -203,7 +201,7 @@
 
 
 (s/fdef distinct-speaker-tags
-        :args (s/cat :caption ::caption)
+        :args (s/cat :caption ::spec/caption)
         :ret (s/coll-of string?))
 
 (defn distinct-speaker-tags
@@ -258,8 +256,8 @@
 
 
 (s/fdef rebuild
-        :args (s/cat :caption ::caption)
-        :ret ::caption)
+        :args (s/cat :caption ::spec/caption)
+        :ret ::spec/caption)
 
 (defn rebuild
   "Rebuild the given captions for better readability, based on punctuation."

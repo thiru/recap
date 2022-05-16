@@ -1,8 +1,8 @@
 (ns recap.caption.rebuild
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :as str]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
+            [recap.caption.specs :as spec]
             [recap.caption.utils :as capu]
             [utils.common :as u]
             [utils.results :as r]))
@@ -25,6 +25,10 @@
 
 
 
+(s/fdef cue-char-count
+        :args (s/cat :cue ::spec/cue)
+        :ret int?)
+
 (defn cue-char-count
   "Count the number of characters in the given cue."
   [cue]
@@ -36,13 +40,31 @@
          (-> cue :lines count dec))
       (recur rest-lines (+ cnt (count line))))))
 
+
+
+(s/fdef clause-ender?
+        :args (s/cat :text string?)
+        :ret boolean?)
+
 (defn clause-ender?
   [text]
   (boolean (re-find (:ends-in-clause-ending-punctuation default-opts) text)))
 
+
+
+(s/fdef punctuation-ender?
+        :args (s/cat :text string?)
+        :ret boolean?)
+
 (defn punctuation-ender?
   [text]
   (boolean (re-find (:ends-in-any-punctuation default-opts) text)))
+
+
+
+(s/fdef start-new-cue?
+        :args (s/cat :wip-cue ::spec/cue :next-cue ::spec/cue :opts map?)
+        :ret boolean?)
 
 (defn start-new-cue?
   "Determine whether this is an ideal point to create a cue. I.e to start a
@@ -98,6 +120,11 @@
     :else
     (<= (:ideal-max-chars-per-line opts)
         wip-cue-char-count)))
+
+
+(s/fdef linger-cues
+        :args (s/cat :caption ::spec/caption)
+        :ret ::spec/caption)
 
 (defn linger-cues
   "Extend the time cues appear on screen, to allow viewers more time to read.

@@ -3,21 +3,14 @@
   (:require [better-cond.core :as b]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
+            [recap.caption.specs :as spec]
             [utils.common :as c]
             [utils.results :as r]))
 
 
 
-(s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]\d+" %))
-(s/def ::start ::duration)
-(s/def ::end ::duration)
-(s/def ::lines (s/coll-of string?))
-(s/def ::cue (s/keys :req-un [::start ::end ::lines]))
-
-
-
 (s/fdef empty-cue
-        :args (s/cat :cue ::cue)
+        :args (s/cat :cue ::spec/cue)
         :ret boolean?)
 
 (defn empty-cue?
@@ -31,8 +24,8 @@
 
 
 (s/fdef total-secs
-        :args (s/cat :cue ::cue)
-        :ret (s/or :seconds float? :error-result :r/result))
+        :args (s/cat :cue ::spec/cue)
+        :ret (s/or :seconds float? :error-result ::r/result))
 
 (defn total-secs
   "Get the total number of seconds spanning the given cue."
@@ -58,7 +51,7 @@
 
 
 (s/fdef to-string
-        :args (s/cat :cue ::cue
+        :args (s/cat :cue ::spec/cue
                      :collapse-cue-lines? boolean?)
         :ret string?)
 
@@ -78,8 +71,8 @@
 
 
 (s/fdef join-cues
-        :args (s/cat :cues (s/coll-of ::cue))
-        :ret ::cue)
+        :args (s/cat :cues (s/coll-of ::spec/cue))
+        :ret ::spec/cue)
 
 (defn join-cues
   "Combine the given cues into one, having just a single line of content."
@@ -94,7 +87,7 @@
 (s/fdef parse-time-range
         :args (s/cat :input string?)
         :ret (s/or :invalid (s/and empty? map?)
-                   :valid (s/keys :req-un [::start ::end])))
+                   :valid (s/keys :req-un [::spec/start ::spec/end])))
 
 (defn parse-time-range
   [input]
