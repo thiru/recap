@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
+            [recap.caption.linger :as linger]
             [recap.caption.rebuild :as rebuild]
             [recap.caption.specs :as spec]
             [recap.caption.speaker :as speaker]
@@ -273,7 +274,7 @@
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
   (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println)
   (-> "tmp/one-word-full.vtt" slurp parse speaker/unique-speaker-tags)
-  (->> "tmp/linger-test.vtt" slurp parse rebuild/linger-cues
+  (->> "tmp/linger-test.vtt" slurp parse linger/linger-cues
        to-string
        (spit "tmp/linger-test-rebuilt.vtt"))
   (def caps (-> "tmp/one-word-full.vtt"
