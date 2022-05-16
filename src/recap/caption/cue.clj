@@ -23,6 +23,23 @@
 
 
 
+(s/fdef char-count
+        :args (s/cat :cue ::spec/cue)
+        :ret int?)
+
+(defn char-count
+  "Count the number of characters in the given cue."
+  [cue]
+  (loop [[line & rest-lines] (:lines cue)
+         cnt 0]
+    (if (nil? rest-lines)
+      (+ cnt (count line)
+         ;; Count lines as a newline chars:
+         (-> cue :lines count dec))
+      (recur rest-lines (+ cnt (count line))))))
+
+
+
 (s/fdef total-secs
         :args (s/cat :cue ::spec/cue)
         :ret (s/or :seconds float? :error-result ::r/result))
@@ -116,6 +133,7 @@
   (def cue {:start "00:01:00.500"
             :end "00:02:10,700"
             :lines ["first line" "second line"]})
+  (char-count {:lines ["abc def"]})
   (total-secs cue)
   (println (to-string cue))
   (println (to-string cue :collapse-cue-lines? true))

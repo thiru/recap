@@ -25,20 +25,6 @@
 
 
 
-(s/fdef cue-char-count
-        :args (s/cat :cue ::spec/cue)
-        :ret int?)
-
-(defn cue-char-count
-  "Count the number of characters in the given cue."
-  [cue]
-  (loop [[line & rest-lines] (:lines cue)
-         cnt 0]
-    (if (nil? rest-lines)
-      (+ cnt (count line)
-         ;; Count lines as a newline chars:
-         (-> cue :lines count dec))
-      (recur rest-lines (+ cnt (count line))))))
 
 
 
@@ -78,8 +64,8 @@
     (capu/get-speaker-tag next-cue-text)
     true
 
-    let [wip-cue-char-count (cue-char-count wip-cue)
-         next-cue-char-count (cue-char-count next-cue)]
+    let [wip-cue-char-count (cue/char-count wip-cue)
+         next-cue-char-count (cue/char-count next-cue)]
 
     ;; Never go above the absolute maximum number of chars allows in a line
     (<= (:absolute-max-chars-per-line opts) (+ wip-cue-char-count
@@ -221,5 +207,4 @@
 
 
 (comment
-  (cue-char-count {:lines ["abc def"]})
   (clause-ender? "sdf;"))
