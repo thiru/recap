@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
-            [recap.cue :as cue]
+            [recap.caption.cue :as cue]
             [recap.caption.utils :as capu]
             [utils.common :as u]
             [utils.results :as r]))

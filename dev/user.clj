@@ -13,8 +13,8 @@
             [utils.results :as r]
             [recap.cli :as cli]
             [recap.caption :as cap]
-            [recap.caption.rebuild :as cap-re]
-            [recap.cue :as cue]))
+            [recap.caption.cue :as cue]
+            [recap.caption.rebuild :as cap-re]))
 
 (defonce started? (atom false))
 

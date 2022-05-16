@@ -1,4 +1,4 @@
-(ns recap.cue
+(ns recap.caption.cue
   "Encapsulates a cue in a caption."
   (:require [better-cond.core :as b]
             [clojure.spec.alpha :as s]
