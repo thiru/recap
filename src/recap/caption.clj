@@ -5,7 +5,7 @@
             [recap.caption.cue :as cue]
             [recap.caption.rebuild :as rebuild]
             [recap.caption.specs :as spec]
-            [recap.caption.utils :as capu]
+            [recap.caption.speaker :as speaker]
             [utils.common :as u]
             [utils.results :as r]))
 
@@ -200,22 +200,6 @@
 
 
 
-(s/fdef distinct-speaker-tags
-        :args (s/cat :caption ::spec/caption)
-        :ret (s/coll-of string?))
-
-(defn distinct-speaker-tags
-  [caption]
-  (some->> caption
-           :cues
-           (mapv :lines)
-           flatten
-           (mapv capu/get-speaker-tag)
-           (remove nil?)
-           distinct))
-
-
-
 (s/fdef strip-contiguous-speaker-tags
         :args (s/cat :input string?)
         :ret string?)
@@ -231,7 +215,7 @@
       (loop [[line & remaining-lines] lines
              last-speaker-tag nil
              stripped []]
-        (let [curr-speaker-tag (capu/get-speaker-tag line)
+        (let [curr-speaker-tag (speaker/get-speaker-tag line)
               adjusted-line (if (and curr-speaker-tag
                                      (= last-speaker-tag curr-speaker-tag))
                               (-> line
@@ -288,7 +272,7 @@
   (-> "tmp/captions.vtt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)
   (-> "tmp/one-word.srt" slurp strip-contiguous-speaker-tags println)
-  (-> "tmp/one-word-full.vtt" slurp parse distinct-speaker-tags)
+  (-> "tmp/one-word-full.vtt" slurp parse speaker/unique-speaker-tags)
   (->> "tmp/linger-test.vtt" slurp parse rebuild/linger-cues
        to-string
        (spit "tmp/linger-test-rebuilt.vtt"))
@@ -302,4 +286,4 @@
                       parse
                       :cues
                       (take 3)))
-  (->> caps rebuild (spit "tmp/rebuilt.vtt")))
+  (->> caps rebuild println #_(spit "tmp/rebuilt.vtt")))

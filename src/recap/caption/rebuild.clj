@@ -3,7 +3,7 @@
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.specs :as spec]
-            [recap.caption.utils :as capu]
+            [recap.caption.speaker :as speaker]
             [utils.common :as u]
             [utils.results :as r]))
 
@@ -61,7 +61,7 @@
          next-cue-text (-> next-cue :lines last (or ""))]
 
     ;; Always start a new line on speaker tag
-    (capu/get-speaker-tag next-cue-text)
+    (speaker/get-speaker-tag next-cue-text)
     true
 
     let [wip-cue-char-count (cue/char-count wip-cue)

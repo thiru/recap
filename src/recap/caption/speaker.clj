@@ -1,5 +1,6 @@
-(ns recap.caption.utils
-  (:require [clojure.spec.alpha :as s]))
+(ns recap.caption.speaker
+  (:require [clojure.spec.alpha :as s]
+            [recap.caption.specs :as spec]))
 
 
 
@@ -37,6 +38,23 @@
     (re-find #"^<v\s+[^>]+>" text)))
 
 
+
+(s/fdef unique-speaker-tags
+        :args (s/cat :caption ::spec/caption)
+        :ret (s/coll-of string?))
+
+(defn unique-speaker-tags
+  "Find unique speaker tags in the given captions."
+  [caption]
+  (some->> caption
+           :cues
+           (mapv :lines)
+           flatten
+           (mapv get-speaker-tag)
+           (remove nil?)
+           distinct))
+
+
 (comment
   (get-speaker-tag "Q1: hello")
   (get-speaker-tag "Al: hello")
@@ -46,4 +64,3 @@
   (get-speaker-tag "Al bob cate: hello")
   (get-speaker-tag "<v Al bob cate:> hello")
   (get-speaker-tag "Hi, Al: hello"))
-
