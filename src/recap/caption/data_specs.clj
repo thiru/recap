@@ -1,5 +1,5 @@
-(ns recap.caption.specs
-  "Primary specs around captions."
+(ns recap.caption.data-specs
+  "Core data-specs around captions."
   (:require [clojure.spec.alpha :as s]))
 
 (s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]\d+" %))

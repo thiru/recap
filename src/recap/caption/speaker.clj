@@ -1,6 +1,6 @@
 (ns recap.caption.speaker
   (:require [clojure.spec.alpha :as s]
-            [recap.caption.specs :as spec]))
+            [recap.caption.data-specs :as dspecs]))
 
 
 
@@ -40,7 +40,7 @@
 
 
 (s/fdef unique-speaker-tags
-        :args (s/cat :caption ::spec/caption)
+        :args (s/cat :caption ::dspecs/caption)
         :ret (s/coll-of string?))
 
 (defn unique-speaker-tags

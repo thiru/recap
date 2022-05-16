@@ -2,7 +2,7 @@
   (:require [clojure.spec.alpha :as s]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
-            [recap.caption.specs :as spec]
+            [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
             [utils.common :as u]))
 
@@ -25,8 +25,8 @@
 
 
 (s/fdef restitch
-        :args (s/cat :caption ::spec/caption)
-        :ret ::spec/caption)
+        :args (s/cat :caption ::dspecs/caption)
+        :ret ::dspecs/caption)
 
 (defn restitch
   "Join cues in the given captions for better readability, based on
@@ -73,7 +73,7 @@
 
 
 (s/fdef start-new-cue?
-        :args (s/cat :wip-cue ::spec/cue :next-cue ::spec/cue :opts map?)
+        :args (s/cat :wip-cue ::dspecs/cue :next-cue ::dspecs/cue :opts map?)
         :ret boolean?)
 
 (defn start-new-cue?

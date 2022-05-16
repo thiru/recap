@@ -2,15 +2,15 @@
   (:require [clojure.spec.alpha :as s]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
-            [recap.caption.specs :as spec]
+            [recap.caption.data-specs :as dspecs]
             [utils.common :as u]
             [utils.results :as r]))
 
 
 (s/fdef linger-cues
-        :args (s/cat :caption ::spec/caption
+        :args (s/cat :caption ::dspecs/caption
                      :max-linger-secs int?)
-        :ret ::spec/caption)
+        :ret ::dspecs/caption)
 
 (defn linger-cues
   "Extend the time cues appear on screen, to allow viewers more time to read.

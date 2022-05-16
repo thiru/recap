@@ -5,7 +5,7 @@
             [recap.caption.cue :as cue]
             [recap.caption.linger :as linger]
             [recap.caption.restitch :as restitch]
-            [recap.caption.specs :as spec]
+            [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
             [utils.common :as u]
             [utils.results :as r]))
@@ -14,7 +14,7 @@
 
 
 (s/fdef empty-caption?
-        :args (s/cat :caption ::spec/caption)
+        :args (s/cat :caption ::dspecs/caption)
         :ret boolean?)
 
 (defn empty-caption?
@@ -29,7 +29,7 @@
 
 (s/fdef parse
         :args (s/cat :input string?)
-        :ret ::spec/caption)
+        :ret ::dspecs/caption)
 
 (defn parse
   "Parse the given captions text into a Clojure data structure.
@@ -113,7 +113,7 @@
 
 
 (s/fdef to-string
-        :args (s/cat :caption ::spec/caption
+        :args (s/cat :caption ::dspecs/caption
                      :collapse-cue-lines? any?)
         :ret string?)
 
@@ -147,7 +147,7 @@
 
 
 (s/fdef find-overlapping-cues
-        :args (s/cat :cues ::spec/cues)
+        :args (s/cat :cues ::dspecs/cues)
         :ret (s/coll-of int?))
 
 (defn find-overlapping-cues

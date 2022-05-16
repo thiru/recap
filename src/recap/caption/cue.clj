@@ -3,14 +3,14 @@
   (:require [better-cond.core :as b]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [recap.caption.specs :as spec]
+            [recap.caption.data-specs :as dspecs]
             [utils.common :as c]
             [utils.results :as r]))
 
 
 
 (s/fdef empty-cue
-        :args (s/cat :cue ::spec/cue)
+        :args (s/cat :cue ::dspecs/cue)
         :ret boolean?)
 
 (defn empty-cue?
@@ -24,7 +24,7 @@
 
 
 (s/fdef char-count
-        :args (s/cat :cue ::spec/cue)
+        :args (s/cat :cue ::dspecs/cue)
         :ret int?)
 
 (defn char-count
@@ -41,7 +41,7 @@
 
 
 (s/fdef total-secs
-        :args (s/cat :cue ::spec/cue)
+        :args (s/cat :cue ::dspecs/cue)
         :ret (s/or :seconds float? :error-result ::r/result))
 
 (defn total-secs
@@ -68,7 +68,7 @@
 
 
 (s/fdef to-string
-        :args (s/cat :cue ::spec/cue
+        :args (s/cat :cue ::dspecs/cue
                      :collapse-cue-lines? boolean?)
         :ret string?)
 
@@ -88,8 +88,8 @@
 
 
 (s/fdef join-cues
-        :args (s/cat :cues (s/coll-of ::spec/cue))
-        :ret ::spec/cue)
+        :args (s/cat :cues (s/coll-of ::dspecs/cue))
+        :ret ::dspecs/cue)
 
 (defn join-cues
   "Combine the given cues into one, having just a single line of content."
@@ -104,7 +104,7 @@
 (s/fdef parse-time-range
         :args (s/cat :input string?)
         :ret (s/or :invalid (s/and empty? map?)
-                   :valid (s/keys :req-un [::spec/start ::spec/end])))
+                   :valid (s/keys :req-un [::dspecs/start ::dspecs/end])))
 
 (defn parse-time-range
   [input]
