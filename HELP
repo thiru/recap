@@ -15,7 +15,7 @@ parse <FILE>
 overlap <FILE>
   Find overlapping cues in the given caption file
 
-rebuild <FILE>
+restitch <FILE>
   Join cues for better readability (based on punctuation)
 
 help, --help, -h

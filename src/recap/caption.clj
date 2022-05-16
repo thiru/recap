@@ -4,7 +4,7 @@
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.linger :as linger]
-            [recap.caption.rebuild :as rebuild]
+            [recap.caption.restitch :as restitch]
             [recap.caption.specs :as spec]
             [recap.caption.speaker :as speaker]
             [utils.common :as u]
@@ -240,34 +240,6 @@
 
 
 
-(s/fdef rebuild
-        :args (s/cat :caption ::spec/caption)
-        :ret ::spec/caption)
-
-(defn rebuild
-  "Rebuild the given captions for better readability, based on punctuation."
-  [caption & {:keys [opts]
-              :or {opts rebuild/default-opts}}]
-  (if (empty-caption? caption)
-    caption
-    (loop [[curr-input-cue & rest-input-cues] (-> caption :cues rest)
-           wip-cue (-> caption :cues first)
-           final-cues []]
-      (if (empty? rest-input-cues)
-        (-> caption
-            (assoc :cues
-                   (conj final-cues (cue/join-cues [wip-cue curr-input-cue])))
-            to-string)
-        (if (rebuild/start-new-cue? wip-cue curr-input-cue opts)
-          (recur rest-input-cues
-                 curr-input-cue
-                 (conj final-cues wip-cue))
-          (recur rest-input-cues
-                 (cue/join-cues [wip-cue curr-input-cue])
-                 final-cues))))))
-
-
-
 (comment
   (-> "tmp/captions.srt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse)
@@ -287,4 +259,4 @@
                       parse
                       :cues
                       (take 3)))
-  (->> caps rebuild println #_(spit "tmp/rebuilt.vtt")))
+  (->> caps restitch/restitch to-string println #_(spit "tmp/rebuilt.vtt")))

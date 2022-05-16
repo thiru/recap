@@ -6,7 +6,8 @@
             [puget.printer :as puget]
             [utils.common :as c]
             [utils.results :as r]
-            [recap.caption :as cap]))
+            [recap.caption :as cap]
+            [recap.caption.restitch :as restitch]))
 
 
 
@@ -46,7 +47,7 @@
              :cmd-name :version
              :cmd-args [])
 
-        (contains? #{:contiguous :overlap :parse :rebuild} cmd-kw)
+        (contains? #{:contiguous :overlap :parse :restitch} cmd-kw)
         (r/r :success ""
              :cmd-name cmd-kw
              :cmd-args (rest args))
@@ -124,7 +125,7 @@
       (puget/cprint parse-r)
       (r/r :success ""))
 
-    :rebuild
+    :restitch
     (b/cond
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
@@ -139,5 +140,5 @@
       parse-r
 
       :else
-      (r/r :success (cap/rebuild parse-r)))))
+      (r/r :success (-> parse-r restitch/restitch cap/to-string)))))
 

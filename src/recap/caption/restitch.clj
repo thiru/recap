@@ -1,11 +1,14 @@
-(ns recap.caption.rebuild
+(ns recap.caption.restitch
   (:require [clojure.spec.alpha :as s]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.specs :as spec]
             [recap.caption.speaker :as speaker]
-            [utils.common :as u]
-            [utils.results :as r]))
+            [utils.common :as u]))
+
+
+
+(declare start-new-cue?)
 
 
 
@@ -18,6 +21,34 @@
    :ends-in-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
    :force-new-cue-tolerance-seconds 3 ; TODO
    :ideal-max-chars-per-line 35})
+
+
+
+(s/fdef restitch
+        :args (s/cat :caption ::spec/caption)
+        :ret ::spec/caption)
+
+(defn restitch
+  "Join cues in the given captions for better readability, based on
+  punctuation, quiet gaps, etc."
+  [caption & {:keys [opts]
+              :or {opts default-opts}}]
+  (if (empty? (:cues caption))
+    caption
+    (loop [[curr-input-cue & rest-input-cues] (-> caption :cues rest)
+           wip-cue (-> caption :cues first)
+           final-cues []]
+      (if (empty? rest-input-cues)
+        (-> caption
+            (assoc :cues
+                   (conj final-cues (cue/join-cues [wip-cue curr-input-cue]))))
+        (if (start-new-cue? wip-cue curr-input-cue opts)
+          (recur rest-input-cues
+                 curr-input-cue
+                 (conj final-cues wip-cue))
+          (recur rest-input-cues
+                 (cue/join-cues [wip-cue curr-input-cue])
+                 final-cues))))))
 
 
 

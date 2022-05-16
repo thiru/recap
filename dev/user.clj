@@ -14,7 +14,7 @@
             [recap.cli :as cli]
             [recap.caption :as cap]
             [recap.caption.cue :as cue]
-            [recap.caption.rebuild :as cap-re]))
+            [recap.caption.restitch :as restitch]))
 
 (defonce started? (atom false))
 
