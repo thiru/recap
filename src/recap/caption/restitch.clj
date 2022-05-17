@@ -4,7 +4,8 @@
             [recap.caption.cue :as cue]
             [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
-            [utils.common :as u]))
+            [utils.common :as u]
+            [utils.results :as r]))
 
 
 (declare start-new-cue?)
@@ -17,7 +18,7 @@
    ;; Same as `:ends-in-clause-ending-punctuation` except adds a comma
    :ends-in-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
    :ends-in-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
-   :force-new-cue-tolerance-seconds 3 ; TODO
+   :force-new-cue-tolerance-secs 3
    :ideal-max-chars-per-line 35})
 
 
@@ -93,6 +94,16 @@
     (<= (:absolute-max-chars-per-line opts) (+ wip-cue-char-count
                                                1 ; space between
                                                next-cue-char-count))
+    true
+
+    let [cue-gap-secs (cue/gap-inbetween wip-cue next-cue)]
+
+    do (when (r/failed? cue-gap-secs)
+         (r/print-msg cue-gap-secs))
+
+    ;; Break line if there's a longish silence
+    (and (r/success? cue-gap-secs)
+         (>= cue-gap-secs (:force-new-cue-tolerance-secs opts)))
     true
 
     ;; Avoid lines starting with a single word ending in a punctuation mark,
