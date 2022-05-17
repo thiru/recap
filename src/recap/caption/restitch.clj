@@ -8,7 +8,8 @@
             [utils.results :as r]))
 
 
-(declare start-new-cue?)
+(declare group-lines
+         start-new-cue?)
 
 
 (def default-opts
@@ -19,7 +20,8 @@
    :ends-in-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
    :ends-in-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
    :force-new-cue-tolerance-secs 3
-   :ideal-max-chars-per-line 35})
+   :ideal-max-chars-per-line 35
+   :max-lines-per-cue 2})
 
 
 
@@ -40,13 +42,16 @@
       (if (empty? rest-input-cues)
         (-> caption
             (assoc :cues
-                   (conj final-cues (cue/join-cues [wip-cue curr-input-cue]))))
+                   (conj final-cues (cue/join-cues [wip-cue curr-input-cue]
+                                                   :concat-lines? true)))
+            (group-lines :max-lines-per-cue (:max-lines-per-cue opts)))
         (if (start-new-cue? wip-cue curr-input-cue opts)
           (recur rest-input-cues
                  curr-input-cue
                  (conj final-cues wip-cue))
           (recur rest-input-cues
-                 (cue/join-cues [wip-cue curr-input-cue])
+                 (cue/join-cues [wip-cue curr-input-cue]
+                                :concat-lines? true)
                  final-cues))))))
 
 
@@ -71,8 +76,32 @@
 
 
 
+(s/fdef has-long-gap?
+        :args (s/cat :cue1 ::dspecs/cue
+                     :cue2 ::dspecs/cue
+                     :force-new-cue-tolerance-secs float?)
+        :ret boolean?)
+
+(defn has-long-gap?
+  "Determine whether there is a long gap between the given cues.
+
+  A gap is considered long if it's greater than
+  `force-new-cue-tolerance-secs`."
+  [cue1 cue2 & {:keys [force-new-cue-tolerance-secs]
+                :or {force-new-cue-tolerance-secs
+                     (:force-new-cue-tolerance-secs default-opts)}}]
+  (let [cue-gap-secs (cue/gap-inbetween cue1 cue2)]
+    (if (r/failed? cue-gap-secs)
+      (do (r/print-msg cue-gap-secs)
+          false)
+      (>= cue-gap-secs force-new-cue-tolerance-secs))))
+
+
+
 (s/fdef start-new-cue?
-        :args (s/cat :wip-cue ::dspecs/cue :next-cue ::dspecs/cue :opts map?)
+        :args (s/cat :wip-cue ::dspecs/cue
+                     :next-cue ::dspecs/cue
+                     :opts map?)
         :ret boolean?)
 
 (defn start-new-cue?
@@ -96,14 +125,8 @@
                                                next-cue-char-count))
     true
 
-    let [cue-gap-secs (cue/gap-inbetween wip-cue next-cue)]
-
-    do (when (r/failed? cue-gap-secs)
-         (r/print-msg cue-gap-secs))
-
     ;; Break line if there's a longish silence
-    (and (r/success? cue-gap-secs)
-         (>= cue-gap-secs (:force-new-cue-tolerance-secs opts)))
+    (has-long-gap? wip-cue next-cue)
     true
 
     ;; Avoid lines starting with a single word ending in a punctuation mark,
@@ -139,6 +162,44 @@
     :else
     (<= (:ideal-max-chars-per-line opts)
         wip-cue-char-count)))
+
+
+
+(s/fdef group-lines
+        :args (s/cat :caption ::dspecs/caption
+                     :max-lines-per-cue int?)
+        :ret ::dspecs/caption)
+
+(defn group-lines
+  "Group cues according to `max-lines-per-cue` and respecting longish quiet
+  gaps."
+  [caption & {:keys [max-lines-per-cue]
+              :or {max-lines-per-cue (:max-lines-per-cue default-opts)}}]
+  (b/cond
+    (empty? (:cues caption))
+    caption
+
+    (not (every? #(= 1 (count (:lines %)))
+                 (:cues caption)))
+    (r/r :error (str "In order to group cue lines every cue must contain just "
+                     "one line each."))
+
+    :else
+    (loop [[curr-input-cue & rest-input-cues] (-> caption :cues rest)
+           wip-cue (-> caption :cues first)
+           final-cues []]
+      (if (empty? rest-input-cues)
+        (assoc caption :cues (conj final-cues wip-cue))
+        (let [append-line? (and (not (has-long-gap? wip-cue curr-input-cue))
+                                (< (-> wip-cue :lines count)
+                                   max-lines-per-cue))]
+          (if append-line?
+            (recur rest-input-cues
+                   (cue/join-cues [wip-cue curr-input-cue])
+                   final-cues)
+            (recur rest-input-cues
+                   curr-input-cue
+                   (conj final-cues wip-cue))))))))
 
 
 (comment

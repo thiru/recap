@@ -121,12 +121,19 @@
         :ret ::dspecs/cue)
 
 (defn join-cues
-  "Combine the given cues into one, having just a single line of content."
-  [cues]
+  "Combine the given cues into one.
+
+  The cue lines are combined into one if `concat-lines?` is `true`."
+  [cues & {:keys [concat-lines?]}]
   {:start (-> cues first :start)
    :end (-> cues last :end)
-   :lines [(str/join " " (mapv #(->> % :lines (str/join " "))
-                               cues))]})
+   :lines (if concat-lines?
+            [(str/join " " (mapv #(->> % :lines (str/join " "))
+                                 cues))]
+            (->> cues
+                 (mapv :lines)
+                 flatten
+                 vec))})
 
 
 
@@ -165,4 +172,9 @@
   (println (to-string cue :collapse-cue-lines? true))
   (join-cues [cue {:start "00:02:00"
                    :end "00:03:00"
-                   :lines ["cue2 first line" "cue 2 second line"]}]))
+                   :lines ["cue2 first line" "cue 2 second line"]}]
+             :concat-lines? true)
+  (join-cues [cue {:start "00:02:00"
+                   :end "00:03:00"
+                   :lines ["cue2 first line" "cue 2 second line"]}]
+             :concat-lines? false))

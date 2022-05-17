@@ -259,4 +259,4 @@
                       parse
                       :cues
                       (take 3)))
-  (->> caps restitch/restitch to-string println #_(spit "tmp/rebuilt.vtt")))
+  (->> caps restitch/restitch linger/linger-cues to-string (spit "tmp/rebuilt.vtt")))
