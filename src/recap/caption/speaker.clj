@@ -1,6 +1,7 @@
 (ns recap.caption.speaker
   (:require [clojure.spec.alpha :as s]
-            [recap.caption.data-specs :as dspecs]))
+            [recap.caption.data-specs :as dspecs]
+            [utils.common :as c]))
 
 
 (declare get-speaker-tag-srt

@@ -116,6 +116,18 @@
 
 
 
+(s/fdef join-lines
+        :args (s/cat :cue ::dspecs/cue)
+        :ret ::dspecs/cue)
+
+(defn join-lines
+  "Join all cue lines into one (delimited by a space)."
+  [cue]
+  (update cue :lines (fn [lines]
+                       [(str/join " " lines)])))
+
+
+
 (s/fdef join-cues
         :args (s/cat :cues (s/coll-of ::dspecs/cue))
         :ret ::dspecs/cue)
@@ -170,6 +182,7 @@
   (total-secs cue)
   (println (to-string cue))
   (println (to-string cue :collapse-cue-lines? true))
+  (join-lines cue)
   (join-cues [cue {:start "00:02:00"
                    :end "00:03:00"
                    :lines ["cue2 first line" "cue 2 second line"]}]

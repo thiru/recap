@@ -34,10 +34,15 @@
   punctuation, quiet gaps, etc."
   [caption & {:keys [opts]
               :or {opts default-opts}}]
-  (if (empty? (:cues caption))
+  (b/cond
+    (empty? (:cues caption))
     caption
-    (loop [[curr-input-cue & rest-input-cues] (-> caption :cues rest)
-           wip-cue (-> caption :cues first)
+
+    let [cues (mapv cue/join-lines (:cues caption))]
+
+    :else
+    (loop [[curr-input-cue & rest-input-cues] (rest cues)
+           wip-cue (first cues)
            final-cues []]
       (if (empty? rest-input-cues)
         (-> caption
