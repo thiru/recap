@@ -22,6 +22,7 @@ native-image \
   -H:Name=target/recap \
   -H:+ReportExceptionStackTraces \
   --initialize-at-build-time \
+  --diagnostics-mode \
   --static \
   --verbose \
   --no-fallback \
@@ -34,6 +35,10 @@ native-image \
 
 # --initialize-at-build-time
 # This is needed for Clojure or else there will be strange errors
+
+# --diagnostics-mode
+# Since GraalVM 22.0 this is needed in order to use the
+# --initialize-at-build-time option without arguments
 
 # --static
 # Don't depend on any system libraries. This flag was originally intended for

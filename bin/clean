@@ -6,5 +6,6 @@ rm -f recap
 rm -rf .cpcache/
 rm -rf classes/
 rm -rf out/
+rm -rf reports/
 rm -rf target/
 

@@ -5,6 +5,7 @@
 .nrepl-port
 classes/
 out/
+reports/
 target/
 tmp/*
 !tmp/.gitkeep
