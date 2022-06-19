@@ -1,12 +1,13 @@
 (ns utils.common
   "Common/generic utilities."
+  (:refer-clojure :exclude [defn])
   (:require [better-cond.core :as b]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [clojure.java.io :as io]
             [puget.printer :as puget]
+            [utils.specin :refer [defn]]
             [utils.results :as r]))
-
 
 
 (defmacro spy
@@ -19,25 +20,11 @@
      evaled#))
 
 
-
-(s/fdef non-neg?
-        :args (s/cat :n number?)
-        :ret boolean?)
-
-(defn non-neg?
-  "Determine whether the given number is non-negative."
-  [n]
-  (<= 0 n))
-
-
-
-(s/fdef exit!
-        :args (s/cat :result ::r/result)
-        :ret nil?)
-
 (defn exit!
   "Exit app with a success/failure exit code based on the given result.
   The result's message is also printed to stdout or stderr as appropriate."
+  {:args (s/cat :result ::r/result)
+   :ret nil?}
   [result]
   (r/print-msg result)
   (System/exit (case (:level result)
@@ -45,34 +32,26 @@
                  1)))
 
 
-
-(s/fdef fmt
-        :args (s/cat :formatter string?
-                     :args (s/coll-of string?))
-        :ret string?)
-
 (defn fmt
   "A convenience function to create a formatted string (via `format`).
 
   The first argument is the format control string. If it's a list it will be
   concatenated together. This makes it easier to format long strings."
+  {:args (s/cat :formatter (s/or :whole-string string?
+                                 :segmented-string (s/coll-of string?))
+                :args (s/* any?))
+   :ret string?}
   [formatter & args]
   (if (sequential? formatter)
     (apply format (str/join "" formatter) args)
     (apply format formatter args)))
 
 
-
-(s/fdef slurp-file
-        :args (s/cat :file-path string?)
-        :ret (s/or :content string?
-                   :error-result :r/result))
-
 (defn slurp-file
-  "Read all contents of the given file.
-
-  Returns the contents of the string if successfully read, otherwise a
-  `r/result`."
+  "Read all contents of the given file."
+  {:args (s/cat :file-path (s/nilable string?))
+   :ret (s/or :content string?
+              :error-result :r/result)}
   [file-path]
   (if (str/blank? file-path)
     (r/r :error "No file was provided")
@@ -83,48 +62,39 @@
         (slurp file)))))
 
 
-
-(s/fdef parse-int
-        :args (s/cat :input string?
-                     :fallback int?)
-        :ret int?)
-
 (defn parse-int
   "Exception-free integer parsing.
 
-   Returns the parsed integer if successful, otherwise fallback."
+   Returns the parsed integer if successful, otherwise `fallback`."
+  {:args (s/cat :input (s/nilable string?)
+                :kwargs (s/keys* :opt-un []))
+   :ret int?}
   [input & {:keys [fallback]
             :or {fallback 0}}]
   (try
    (Integer/parseInt input)
-   (catch Exception _
-     fallback)))
+   (catch Exception _ fallback)))
 
-
-
-(s/fdef parse-float
-        :args (s/cat :input string?
-                     :fallback float?)
-        :ret float?)
 
 (defn parse-float
   "Exception-free float parsing.
 
-   Returns the parsed float if successful, otherwise fallback."
+   Returns the parsed float if successful, otherwise `fallback`."
+  {:args (s/cat :input (s/nilable string?)
+                :kwargs (s/keys* :opt-un []))
+   :ret float?}
   [input & {:keys [fallback]
             :or {fallback 0.0}}]
   (try
    (Float/parseFloat input)
-   (catch Exception _
-     fallback)))
+   (catch Exception _ fallback)))
 
-
-(s/fdef duration->secs
-        :args (s/cat :duration string?)
-        :ret (s/or :seconds float? :error-result :r/result))
 
 (defn duration->secs
   "Parse the given duration string to a total number of seconds."
+  {:args (s/cat :duration (s/nilable string?))
+   :ret (s/or :seconds float?
+              :error-result :r/result)}
   [duration]
   (b/cond
     (str/blank? duration)
@@ -161,14 +131,11 @@
     total-secs))
 
 
-
-(s/fdef millis->duration
-        :args (s/cat :millis int?
-                     :show-millis? boolean?)
-        :ret (s/or :duration string?))
-
 (defn millis->duration
   "Convert the given milliseconds to a duration."
+  {:args (s/cat :millis number?
+                :kwargs (s/keys* :opt-un []))
+   :ret (s/or :duration string?)}
   [millis & {:keys [show-millis?]}]
   (when (not (number? millis))
     (throw (ex-info "Input must be a number specifying milliseconds"

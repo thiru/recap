@@ -2,5 +2,5 @@
 
 # Run app using Clojure CLI.
 
-clojure -M -m recap.main "$@"
+clojure -J-Dclojure.spec.compile-asserts=false -M -m recap.main "$@"
 

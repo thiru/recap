@@ -1,6 +1,8 @@
 (ns utils.results
   "Generic facilities around reporting and validation."
-  (:require [clojure.spec.alpha :as s]))
+  (:refer-clojure :exclude [defn])
+  (:require [clojure.spec.alpha :as s]
+            [utils.specin :refer [defn]]))
 
 (set! *warn-on-reflection* true) ; for graalvm
 
@@ -34,11 +36,7 @@
 ;; string representation of most objects.
 (s/def ::message any?)
 (s/def ::result (s/keys :req-un [::level ::message]))
-(s/fdef r
-        :args (s/cat :level ::level
-                     :message (s/? ::message)
-                     :more (s/? map?))
-        :ret ::result)
+
 
 (defn r
   "Creates a map representing the result of some operation.
@@ -56,14 +54,18 @@
       * while _non-negative_ values are considered informational or successful
   * `message`
     * A message describing the result (usually a string)
-  * `rest`
+  * `extra`
     * Additional key/value pairs to merge into the result map"
+  {:args (s/cat :level ::level
+                :message (s/? ::message)
+                :extra (s/? map?))
+   :ret ::result}
   ([level]
    (r level ""))
   ([level message]
    {:level level :message message})
-  ([level message & {:as rest}]
-   (merge (r level message) rest)))
+  ([level message extra]
+   (merge (r level message) extra)))
 
 (defmulti success?
   "Determine whether the given object represents a successful outcome.
@@ -113,12 +115,11 @@
   [result msg]
   (assoc result :message (str msg (:message result))))
 
-(s/fdef print-msg
-        :args (s/cat :result ::result)
-        :ret nil?)
 (defn print-msg
   "Prints the message of the given result to stdout or stderr accordingly.
   No printing is done if the message is empty."
+  {:args (s/cat :result ::result)
+   :ret nil?}
   [result] (when (not (empty? (or (:message result) "")))
              (if (success? result)
                (println (:message result))
@@ -128,3 +129,4 @@
 
 (comment
   (prepend-msg (r :info "original") "prepended - "))
+

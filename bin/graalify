@@ -14,7 +14,7 @@ mkdir -p classes
 mkdir -p target
 
 # Compile Clojure:
-clojure -M -e "(compile 'recap.main)"
+clojure -J-Dclojure.spec.compile-asserts=false -M -e "(compile 'recap.main)"
 
 # Build stand-alone binary:
 native-image \
@@ -28,6 +28,7 @@ native-image \
   --no-fallback \
   --no-server \
   --report-unsupported-elements-at-runtime \
+  "-J-Dclojure.spec.compile-asserts=false" \
   "-J-Xmx16g" \
   recap.main
 

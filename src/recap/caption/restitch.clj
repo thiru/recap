@@ -1,15 +1,21 @@
 (ns recap.caption.restitch
+  (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
             [utils.common :as u]
+            [utils.specin :refer [defn]]
             [utils.results :as r]))
 
 
 (declare group-lines
          start-new-cue?)
+
+
+(s/def ::force-new-cue-tolerance-secs float?)
+(s/def ::max-lines-per-cue int?)
 
 
 (def default-opts
@@ -24,14 +30,12 @@
    :max-lines-per-cue 2})
 
 
-
-(s/fdef restitch
-        :args (s/cat :caption ::dspecs/caption)
-        :ret ::dspecs/caption)
-
 (defn restitch
   "Join cues in the given captions for better readability, based on
   punctuation, quiet gaps, etc."
+  {:args (s/cat :caption ::dspecs/caption
+                :kwargs (s/keys* :opt-un []))
+   :ret ::dspecs/caption}
   [caption & {:keys [opts]
               :or {opts default-opts}}]
   (b/cond
@@ -60,38 +64,29 @@
                  final-cues))))))
 
 
-
-(s/fdef clause-ender?
-        :args (s/cat :text string?)
-        :ret boolean?)
-
 (defn clause-ender?
+  {:args (s/cat :text string?)
+   :ret boolean?}
   [text]
   (boolean (re-find (:ends-in-clause-ending-punctuation default-opts) text)))
 
 
-
-(s/fdef punctuation-ender?
-        :args (s/cat :text string?)
-        :ret boolean?)
-
 (defn punctuation-ender?
+  {:args (s/cat :text string?)
+   :ret boolean?}
   [text]
   (boolean (re-find (:ends-in-any-punctuation default-opts) text)))
 
-
-
-(s/fdef has-long-gap?
-        :args (s/cat :cue1 ::dspecs/cue
-                     :cue2 ::dspecs/cue
-                     :force-new-cue-tolerance-secs float?)
-        :ret boolean?)
 
 (defn has-long-gap?
   "Determine whether there is a long gap between the given cues.
 
   A gap is considered long if it's greater than
   `force-new-cue-tolerance-secs`."
+  {:args (s/cat :cue1 ::dspecs/cue
+                :cue2 ::dspecs/cue
+                :kwargs (s/keys* :opt-un [::force-new-cue-tolerance-secs]))
+   :ret boolean?}
   [cue1 cue2 & {:keys [force-new-cue-tolerance-secs]
                 :or {force-new-cue-tolerance-secs
                      (:force-new-cue-tolerance-secs default-opts)}}]
@@ -102,16 +97,13 @@
       (>= cue-gap-secs force-new-cue-tolerance-secs))))
 
 
-
-(s/fdef start-new-cue?
-        :args (s/cat :wip-cue ::dspecs/cue
-                     :next-cue ::dspecs/cue
-                     :opts map?)
-        :ret boolean?)
-
 (defn start-new-cue?
   "Determine whether this is an ideal point to create a cue. I.e to start a
   new cue at `wip-cue`."
+  {:args (s/cat :wip-cue ::dspecs/cue
+                :next-cue ::dspecs/cue
+                :opts map?)
+   :ret boolean?}
   [wip-cue next-cue opts]
   (b/cond
     let [wip-cue-text (-> wip-cue :lines last (or ""))
@@ -169,15 +161,12 @@
         wip-cue-char-count)))
 
 
-
-(s/fdef group-lines
-        :args (s/cat :caption ::dspecs/caption
-                     :max-lines-per-cue int?)
-        :ret ::dspecs/caption)
-
 (defn group-lines
   "Group cues according to `max-lines-per-cue` and respecting longish quiet
   gaps."
+  {:args (s/cat :caption ::dspecs/caption
+                :kwargs (s/keys* :opt-un [::max-lines-per-cue]))
+   :ret ::dspecs/caption}
   [caption & {:keys [max-lines-per-cue]
               :or {max-lines-per-cue (:max-lines-per-cue default-opts)}}]
   (b/cond
@@ -206,6 +195,6 @@
                    curr-input-cue
                    (conj final-cues wip-cue))))))))
 
-
 (comment
   (clause-ender? "sdf;"))
+

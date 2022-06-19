@@ -1,21 +1,22 @@
 (ns recap.caption.speaker
+  (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [recap.caption.data-specs :as dspecs]
-            [utils.common :as c]))
+            [utils.common :as c]
+            [utils.specin :refer [defn]]))
 
 
 (declare get-speaker-tag-srt
          get-speaker-tag-webvtt)
 
-(s/fdef get-speaker-tag
-        :args (s/cat :text string?)
-        :ret (s/or :found string?
-                   :not-found nil?))
 
 (defn get-speaker-tag
   "Find the speaker tag in the given text, if present.
 
   A speaker tag is taken to be the text that indentifies a speaker."
+  {:args (s/cat :text string?)
+   :ret (s/or :found string?
+              :not-found nil?)}
   [text]
   (or (get-speaker-tag-webvtt text)
       (get-speaker-tag-srt text)))
@@ -42,14 +43,11 @@
     (re-find #"^<v\s+[^>]+>" text)))
 
 
-
-(s/fdef unique-speaker-tags
-        :args (s/cat :caption ::dspecs/caption)
-        :ret (s/or :found (s/coll-of string?)
-                   :not-found nil?))
-
 (defn unique-speaker-tags
   "Find unique speaker tags in the given captions."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret (s/or :found (s/coll-of string?)
+              :not-found nil?)}
   [caption]
   (some->> caption
            :cues
@@ -69,3 +67,4 @@
   (get-speaker-tag "Al bob cate: hello")
   (get-speaker-tag "<v Al bob cate:> hello")
   (get-speaker-tag "Hi, Al: hello"))
+

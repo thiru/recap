@@ -6,7 +6,9 @@
             [clojure.pprint :refer :all]
             [clojure.reflect :refer :all]
             [clojure.repl :refer :all]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str]
+            [expound.alpha :as expound]
             [puget.printer :as puget]
             [reloader.core :as reloader]
             [utils.common :as c]
@@ -14,17 +16,28 @@
             [recap.cli :as cli]
             [recap.caption :as cap]
             [recap.caption.cue :as cue]
+            [recap.main :as main]
             [recap.caption.restitch :as restitch]))
 
-(defonce started? (atom false))
+(defonce initialised? (atom false))
 
-(when (not @started?)
-  (reset! started? true)
-  (reloader/start ["src" "dev"]))
-
-(defonce ^{:doc "A short-hand to quit gracefully (otherwise rebel-readline hangs process)."}
+(defonce ^{:doc "A short-hand to quit gracefully (otherwise rebel-readline hangs the process)."}
   q (delay (System/exit 0)))
 
-(defn PP
+(defmacro PP
+  "Convenience macro to pretty-print last evaluated result at the REPL."
   []
-  (puget/cprint *1))
+  `(puget/cprint *1))
+
+(defn install-expound-printer
+  "Replace Clojure Spec's default printer with Expound's printer.
+
+  Ref: https://cljdoc.org/d/expound/expound/0.9.0/doc/faq"
+  []
+  (alter-var-root #'s/*explain-out* (constantly expound/printer)))
+
+(when (not @initialised?)
+  (reset! initialised? true)
+  (install-expound-printer)
+  (reloader/start ["src" "dev"]))
+

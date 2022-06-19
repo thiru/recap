@@ -1,19 +1,19 @@
 (ns recap.caption.cue
   "Encapsulates a cue in a caption."
+  (:refer-clojure :exclude [defn])
   (:require [better-cond.core :as b]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [recap.caption.data-specs :as dspecs]
             [utils.common :as c]
+            [utils.specin :refer [defn]]
             [utils.results :as r]))
 
 
-(s/fdef empty-cue
-        :args (s/cat :cue ::dspecs/cue)
-        :ret boolean?)
-
 (defn empty-cue?
   "Determine whether the given cue has any content (i.e. non-blank content)."
+  {:args (s/cat :cue (s/nilable ::dspecs/cue))
+   :ret boolean?}
   [cue]
   (or (nil? cue)
       (empty? cue)
@@ -21,13 +21,10 @@
       (every? str/blank? (:lines cue))))
 
 
-
-(s/fdef char-count
-        :args (s/cat :cue ::dspecs/cue)
-        :ret int?)
-
 (defn char-count
   "Count the number of characters in the given cue."
+  {:args (s/cat :cue ::dspecs/cue)
+   :ret nat-int?}
   [cue]
   (loop [[line & rest-lines] (:lines cue)
          cnt 0]
@@ -38,13 +35,10 @@
       (recur rest-lines (+ cnt (count line))))))
 
 
-
-(s/fdef parse-time-range
-        :args (s/cat :input string?)
-        :ret (s/or :invalid (s/and empty? map?)
-                   :valid (s/keys :req-un [::dspecs/start ::dspecs/end])))
-
 (defn parse-time-range
+  {:args (s/cat :input string?)
+   :ret (s/or :invalid (s/and empty? map?)
+              :valid (s/keys :req-un [::dspecs/start ::dspecs/end]))}
   [input]
   (b/cond
     (str/blank? input)
@@ -61,13 +55,10 @@
      :end (str/replace (last matches) "," ".")}))
 
 
-
-(s/fdef total-secs
-        :args (s/cat :cue ::dspecs/cue)
-        :ret (s/or :seconds float? :error-result ::r/result))
-
 (defn total-secs
   "Get the total number of seconds spanning the given cue."
+  {:args (s/cat :cue ::dspecs/cue)
+   :ret (s/or :seconds float? :error-result ::r/result)}
   [cue]
   (b/cond
     (empty? cue)
@@ -88,13 +79,12 @@
     (- end-dur-r start-dur-r)))
 
 
-
-(s/fdef gap-inbetween
-        :args (s/cat :cue1 ::dspecs/cue :cue2 ::dspecs/cue)
-        :ret (s/or :seconds float? :error-result ::r/result))
-
 (defn gap-inbetween
   "Get the number of seconds between the two cues."
+  {:args (s/cat :cue1 ::dspecs/cue
+                :cue2 ::dspecs/cue)
+   :ret (s/or :seconds float?
+              :error-result ::r/result)}
   [cue1 cue2]
   (b/cond
     let [cue1-end-secs (c/duration->secs (:end cue1))]
@@ -115,27 +105,22 @@
     (- cue2-start-secs cue1-end-secs)))
 
 
-
-(s/fdef join-lines
-        :args (s/cat :cue ::dspecs/cue)
-        :ret ::dspecs/cue)
-
 (defn join-lines
   "Join all cue lines into one (delimited by a space)."
+  {:args (s/cat :cue ::dspecs/cue)
+   :ret ::dspecs/cue}
   [cue]
   (update cue :lines (fn [lines]
                        [(str/join " " lines)])))
 
 
-
-(s/fdef join-cues
-        :args (s/cat :cues (s/coll-of ::dspecs/cue))
-        :ret ::dspecs/cue)
-
 (defn join-cues
   "Combine the given cues into one.
 
   The cue lines are combined into one if `concat-lines?` is `true`."
+  {:args (s/cat :cues (s/coll-of ::dspecs/cue)
+                :kwargs (s/keys* :opt-un []))
+   :ret ::dspecs/cue}
   [cues & {:keys [concat-lines?]}]
   {:start (-> cues first :start)
    :end (-> cues last :end)
@@ -148,25 +133,21 @@
                  vec))})
 
 
-
-(s/fdef to-string
-        :args (s/cat :cue ::dspecs/cue
-                     :collapse-cue-lines? boolean?)
-        :ret string?)
-
 (defn to-string
   "Convert the given cue to a plain string, suitable to be placed in a caption
   file.
 
   * `collapse-cue-lines?`
     * Whether to join separate lines in a cue into one (space-delimited)"
+  {:args (s/cat :cue ::dspecs/cue
+                :kwargs (s/keys* :opt-un []))
+   :ret string?}
   [cue & {:keys [collapse-cue-lines?]}]
   (str (:start cue) " --> " (:end cue) "\n"
        (if (:lines cue)
          (str/join (if collapse-cue-lines? " " "\n")
                    (:lines cue))
          (:line cue))))
-
 
 
 (comment

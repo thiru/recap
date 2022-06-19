@@ -1,14 +1,15 @@
 (ns recap.cli
   "Command-line interface abstraction."
+  (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
             [puget.printer :as puget]
             [utils.common :as c]
+            [utils.specin :refer [defn]]
             [utils.results :as r]
             [recap.caption :as cap]
             [recap.caption.restitch :as restitch]))
-
 
 
 (def version (-> (slurp "VERSION")
@@ -17,56 +18,52 @@
               (format version)))
 
 
-
 (s/def ::cmd-name keyword?)
 (s/def ::cmd-args (s/coll-of string?))
 (s/def ::parse-r (s/keys :req-un [:r/level :r/message
                                   ::cmd-name ::cmd-args]))
-(s/fdef parse
-        :args (s/cat :args (s/coll-of string?))
-        :ret ::parse-r)
+
 
 (defn parse
   "Parse the given CLI arguments."
+  {:args (s/cat :args (s/coll-of string?))
+   :ret ::parse-r}
   [args]
   (if (empty? args)
     (r/r :error "No command specified. Try running: recap --help"
-         :cmd-name nil
-         :cmd-args [])
+         {:cmd-name nil
+          :cmd-args []})
 
     (let [cmd-name (first args)
           cmd-kw (-> cmd-name str/lower-case keyword)]
       (cond
         (contains? #{:help :--help :-h} cmd-kw)
         (r/r :success ""
-             :cmd-name :help
-             :cmd-args [])
+             {:cmd-name :help
+              :cmd-args []})
 
         (contains? #{:version :--version} cmd-kw)
         (r/r :success ""
-             :cmd-name :version
-             :cmd-args [])
+             {:cmd-name :version
+              :cmd-args []})
 
         (contains? #{:contiguous :overlap :parse :restitch} cmd-kw)
         (r/r :success ""
-             :cmd-name cmd-kw
-             :cmd-args (rest args))
+             {:cmd-name cmd-kw
+              :cmd-args (rest args)})
 
         :else
         (r/r :error (c/fmt ["Unrecognised command/option: '%s'. Try running: "
                             "recap --help"]
                            (first args))
-             :cmd-name cmd-kw
-             :cmd-args [])))))
+             {:cmd-name cmd-kw
+              :cmd-args []})))))
 
-
-
-(s/fdef run-cmd
-        :args (s/cat :cli-r ::parse-r)
-        :ret ::r/result)
 
 (defn run-cmd
   "Action the specified CLI command."
+  {:args (s/cat :parse-r ::parse-r)
+   :ret ::r/result}
   [parse-r]
   (when (r/failed? parse-r)
     (c/exit! parse-r))

@@ -1,4 +1,5 @@
 (ns recap.caption
+  (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
@@ -8,17 +9,14 @@
             [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
             [utils.common :as u]
+            [utils.specin :refer [defn]]
             [utils.results :as r]))
 
 
-
-
-(s/fdef empty-caption?
-        :args (s/cat :caption ::dspecs/caption)
-        :ret boolean?)
-
 (defn empty-caption?
   "Determine whether the given caption has any content (i.e. no cues)."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret boolean?}
   [caption]
   (or (nil? caption)
       (empty? caption)
@@ -26,15 +24,12 @@
       (every? cue/empty-cue? (:cues caption))))
 
 
-
-(s/fdef parse
-        :args (s/cat :input string?)
-        :ret ::dspecs/caption)
-
 (defn parse
   "Parse the given captions text into a Clojure data structure.
 
   This should work for SRT and WebVTT formats."
+  {:args (s/cat :input (s/nilable string?))
+   :ret ::dspecs/caption}
   [input]
   (b/cond
     (str/blank? input)
@@ -62,7 +57,7 @@
            :cues cues})
 
         (= scanning-for :header)
-        (let [cue-idx (u/parse-int line -1)
+        (let [cue-idx (u/parse-int line :fallback -1)
               header? (and (not (str/blank? line))
                            (not (pos-int? cue-idx)))]
           (if header?
@@ -111,17 +106,14 @@
                         {:line line}))))))
 
 
-
-(s/fdef to-string
-        :args (s/cat :caption ::dspecs/caption
-                     :collapse-cue-lines? any?)
-        :ret string?)
-
 (defn to-string
   "Convert the given captions to a plain string.
 
   * `collapse-cue-lines?`
     * Whether to join separate lines in a cue into one (space-delimited)"
+  {:args (s/cat :caption ::dspecs/caption
+                :kwargs (s/keys* :opt-un []))
+   :ret string?}
   [caption & {:keys [collapse-cue-lines?]}]
   (loop [[cue & rest-cues] (:cues caption)
          cue-idx 1
@@ -145,16 +137,13 @@
                   "\n")))))
 
 
-
-(s/fdef find-overlapping-cues
-        :args (s/cat :cues ::dspecs/cues)
-        :ret (s/coll-of int?))
-
 (defn find-overlapping-cues
   "Check if the given cues contain any cases where more than one cue appears on
   screen at once.
 
   Returns a list of indeces of cues which overlap, if any."
+  {:args (s/cat :cues ::dspecs/cues)
+   :ret (s/coll-of nat-int?)}
   [cues]
   (if (or (empty? cues)
           (= 1 (count cues)))
@@ -200,15 +189,12 @@
                  overlapping-idxs))))))
 
 
-
-(s/fdef strip-contiguous-speaker-tags
-        :args (s/cat :input string?)
-        :ret string?)
-
 (defn strip-contiguous-speaker-tags
   "Remove contiguous same speaker tags from the given captions.
 
   I.e. only show a speaker tag when there is a change in speaker."
+  {:args (s/cat :input (s/? string?))
+   :ret string?}
   [input]
   (if (str/blank? input)
     input
@@ -241,6 +227,8 @@
 
 
 (comment
+  (parse nil)
+  (parse "")
   (-> "tmp/captions.srt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse)
   (-> "tmp/captions.vtt" slurp parse :cues find-overlapping-cues)

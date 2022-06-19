@@ -1,22 +1,24 @@
 (ns recap.caption.linger
+  (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.data-specs :as dspecs]
             [utils.common :as u]
+            [utils.specin :refer [defn]]
             [utils.results :as r]))
 
 
-(s/fdef linger-cues
-        :args (s/cat :caption ::dspecs/caption
-                     :max-linger-secs int?)
-        :ret ::dspecs/caption)
+(s/def ::max-linger-secs int?)
 
 (defn linger-cues
   "Extend the time cues appear on screen, to allow viewers more time to read.
 
   This elimiates most gaps between cues. An upper limit (in seconds) is defined
   by `max-linger-secs`."
+  {:args (s/cat :caption ::dspecs/caption
+                ::kwargs (s/keys* :opt-un [::max-linger-secs]))
+   :ret ::dspecs/caption}
   [caption & {:keys [max-linger-secs]
               :or {max-linger-secs 3}}]
   (if (<= (-> caption :cues count) 1)
