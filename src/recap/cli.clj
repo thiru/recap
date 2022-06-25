@@ -9,6 +9,7 @@
             [utils.specin :refer [defn]]
             [utils.results :as r]
             [recap.caption :as cap]
+            [recap.caption.linger :as linger]
             [recap.caption.restitch :as restitch]))
 
 
@@ -17,7 +18,7 @@
 (def help (-> (slurp "HELP")
               (format version)))
 
-(def primary-commands #{:contiguous :overlap :parse :restitch})
+(def primary-commands #{:contiguous :linger :overlap :parse :restitch})
 
 (s/def ::cmd-name keyword?)
 (s/def ::cmd-args (s/coll-of string?))
@@ -122,6 +123,29 @@
       :else
       (puget/cprint cap-parse-r)
       (r/r :success ""))
+
+    :linger
+    (b/cond
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
+
+      (r/failed? slurp-r)
+      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
+
+      let [cap-parse-r (cap/parse slurp-r)]
+
+      (r/failed? cap-parse-r)
+      cap-parse-r
+
+      let [linger-secs (-> cmd-parse-r
+                           :cmd-args
+                           second
+                           (c/parse-int :fallback linger/max-linger-secs-default))]
+
+      :else
+      (r/r :success (-> cap-parse-r
+                        (linger/linger-cues :max-linger-secs linger-secs)
+                        cap/to-string)))
+
 
     :restitch
     (b/cond

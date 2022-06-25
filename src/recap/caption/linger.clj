@@ -9,6 +9,9 @@
             [utils.results :as r]))
 
 
+(def max-linger-secs-default 3)
+
+
 (s/def ::max-linger-secs int?)
 
 (defn linger-cues
@@ -20,7 +23,7 @@
                 ::kwargs (s/keys* :opt-un [::max-linger-secs]))
    :ret ::dspecs/caption}
   [caption & {:keys [max-linger-secs]
-              :or {max-linger-secs 3}}]
+              :or {max-linger-secs max-linger-secs-default}}]
   (if (<= (-> caption :cues count) 1)
     caption
     ;; Skip first cue since we're always comparing with previous cues
