@@ -17,17 +17,18 @@
 (def help (-> (slurp "HELP")
               (format version)))
 
+(def primary-commands #{:contiguous :overlap :parse :restitch})
 
 (s/def ::cmd-name keyword?)
 (s/def ::cmd-args (s/coll-of string?))
-(s/def ::parse-r (s/keys :req-un [:r/level :r/message
-                                  ::cmd-name ::cmd-args]))
+(s/def ::cmd-parse-r (s/keys :req-un [:r/level :r/message
+                                      ::cmd-name ::cmd-args]))
 
 
 (defn parse
   "Parse the given CLI arguments."
   {:args (s/cat :args (s/coll-of string?))
-   :ret ::parse-r}
+   :ret ::cmd-parse-r}
   [args]
   (if (empty? args)
     (r/r :error "No command specified. Try running: recap --help"
@@ -47,7 +48,7 @@
              {:cmd-name :version
               :cmd-args []})
 
-        (contains? #{:contiguous :overlap :parse :restitch} cmd-kw)
+        (contains? primary-commands cmd-kw)
         (r/r :success ""
              {:cmd-name cmd-kw
               :cmd-args (rest args)})
@@ -62,13 +63,13 @@
 
 (defn run-cmd
   "Action the specified CLI command."
-  {:args (s/cat :parse-r ::parse-r)
+  {:args (s/cat :cmd-parse-r ::cmd-parse-r)
    :ret ::r/result}
-  [parse-r]
-  (when (r/failed? parse-r)
-    (c/exit! parse-r))
+  [cmd-parse-r]
+  (when (r/failed? cmd-parse-r)
+    (c/exit! cmd-parse-r))
 
-  (case (:cmd-name parse-r)
+  (case (:cmd-name cmd-parse-r)
     :help
     (r/r :success help)
 
@@ -77,7 +78,7 @@
 
     :contiguous
     (b/cond
-      let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
       (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
@@ -87,18 +88,18 @@
 
     :overlap
     (b/cond
-      let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
       (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
 
-      let [parse-r (cap/parse slurp-r)]
+      let [cap-parse-r (cap/parse slurp-r)]
 
-      (r/failed? parse-r)
-      parse-r
+      (r/failed? cap-parse-r)
+      cap-parse-r
 
       :else
-      (let [indeces (cap/find-overlapping-cues (:cues parse-r))]
+      (let [indeces (cap/find-overlapping-cues (:cues cap-parse-r))]
         (if (empty? indeces)
           (r/r :success "No overlapping cues found")
           (r/r :success (c/fmt ["Found %d overlapping cue(s) at the following "
@@ -108,34 +109,34 @@
 
     :parse
     (b/cond
-      let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
       (r/prepend-msg slurp-r "Attempt to read file failed: ")
 
-      let [parse-r (cap/parse slurp-r)]
+      let [cap-parse-r (cap/parse slurp-r)]
 
-      (r/failed? parse-r)
-      parse-r
+      (r/failed? cap-parse-r)
+      cap-parse-r
 
       :else
-      (puget/cprint parse-r)
+      (puget/cprint cap-parse-r)
       (r/r :success ""))
 
     :restitch
     (b/cond
-      let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
       (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
 
-      let [parse-r (-> slurp-r
-                       cap/strip-contiguous-speaker-tags
-                       cap/parse)]
+      let [cap-parse-r (-> slurp-r
+                           cap/strip-contiguous-speaker-tags
+                           cap/parse)]
 
-      (r/failed? parse-r)
-      parse-r
+      (r/failed? cap-parse-r)
+      cap-parse-r
 
       :else
-      (r/r :success (-> parse-r restitch/restitch cap/to-string)))))
+      (r/r :success (-> cap-parse-r restitch/restitch cap/to-string)))))
 
