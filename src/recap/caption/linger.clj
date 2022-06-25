@@ -9,10 +9,10 @@
             [utils.results :as r]))
 
 
-(def max-linger-secs-default 3)
+(def max-linger-secs-default 3.0)
 
 
-(s/def ::max-linger-secs int?)
+(s/def ::max-linger-secs number?)
 
 (defn linger-cues
   "Extend the time cues appear on screen, to allow viewers more time to read.

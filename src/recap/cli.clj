@@ -139,7 +139,7 @@
       let [linger-secs (-> cmd-parse-r
                            :cmd-args
                            second
-                           (c/parse-int :fallback linger/max-linger-secs-default))]
+                           (c/parse-float :fallback linger/max-linger-secs-default))]
 
       :else
       (r/r :success (-> cap-parse-r
