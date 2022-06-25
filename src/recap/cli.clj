@@ -80,7 +80,7 @@
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
+      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
 
       :else
       (r/r :success (cap/strip-contiguous-speaker-tags slurp-r)))
@@ -90,7 +90,7 @@
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
+      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
 
       let [parse-r (cap/parse slurp-r)]
 
@@ -111,7 +111,7 @@
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
+      (r/prepend-msg slurp-r "Attempt to read file failed: ")
 
       let [parse-r (cap/parse slurp-r)]
 
@@ -127,7 +127,7 @@
       let [slurp-r (c/slurp-file (-> parse-r :cmd-args first))]
 
       (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to parse captions failed: ")
+      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
 
       let [parse-r (-> slurp-r
                        cap/strip-contiguous-speaker-tags

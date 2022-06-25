@@ -7,13 +7,13 @@ USAGE: recap <command> [<args>]
 COMMANDS:
 
 contiguous <FILE>
-  Find contiguous same speaker tags and remove them
-
-parse <FILE>
-  Parse the given caption file and output as an EDN map
+  Find contiguous, same speaker tags and remove them
 
 overlap <FILE>
   Find overlapping cues in the given caption file
+
+parse <FILE>
+  Parse the given caption file and output as an EDN map
 
 restitch <FILE>
   Join cues for better readability (based on punctuation)
