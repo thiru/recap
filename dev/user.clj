@@ -15,6 +15,7 @@
             [utils.results :as r]
             [recap.cli :as cli]
             [recap.caption :as cap]
+            [recap.caption.copyright :as copyright]
             [recap.caption.cue :as cue]
             [recap.main :as main]
             [recap.caption.restitch :as restitch]))
