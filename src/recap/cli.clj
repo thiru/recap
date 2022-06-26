@@ -9,6 +9,7 @@
             [utils.specin :refer [defn]]
             [utils.results :as r]
             [recap.caption :as cap]
+            [recap.caption.copyright :as copyright]
             [recap.caption.linger :as linger]
             [recap.caption.restitch :as restitch]))
 
@@ -18,7 +19,7 @@
 (def help (-> (slurp "HELP")
               (format version)))
 
-(def primary-commands #{:contiguous :linger :overlap :parse :restitch})
+(def primary-commands #{:contiguous :copyright :linger :overlap :parse :restitch})
 
 (s/def ::cmd-name keyword?)
 (s/def ::cmd-args (s/coll-of string?))
@@ -86,6 +87,62 @@
 
       :else
       (r/r :success (cap/strip-contiguous-speaker-tags slurp-r)))
+
+    :copyright
+    (b/cond
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
+
+      (r/failed? slurp-r)
+      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
+
+      let [cap-parse-r (cap/parse slurp-r)]
+
+      (r/failed? cap-parse-r)
+      cap-parse-r
+
+      let [media-duration-str (-> cmd-parse-r :cmd-args second)
+           media-duration-secs (c/parse-float media-duration-str
+                                              :fallback 0)]
+
+      (zero? media-duration-secs)
+      (r/r :error (str "Media duration should be a positive number but was: "
+                       media-duration-str))
+
+      let [copyright-file-name (-> cmd-parse-r :cmd-args (nth 2 ""))
+           copyright-file-r (c/slurp-file copyright-file-name)]
+
+      (r/failed? copyright-file-r)
+      (r/prepend-msg copyright-file-r
+                     "Attempt to read copyright file failed: ")
+
+      (str/blank? copyright-file-r)
+      (r/r :warn
+           (str "No copyright content found in file: " copyright-file-name))
+
+      let [copyright-lines (-> copyright-file-r
+                               str/trim
+                               str/split-lines)
+           cue-duration (-> cmd-parse-r
+                            :cmd-args
+                            (nth 3 nil)
+                            (or (:cue-duration copyright/defaults)))
+           cue-gap (-> cmd-parse-r
+                       :cmd-args
+                       (nth 3 nil)
+                       (or (:cue-gap copyright/defaults)))
+           end-gap (-> cmd-parse-r
+                       :cmd-args
+                       (nth 3 nil)
+                       (or (:end-gap copyright/defaults)))]
+
+      :else
+      (r/r :success (-> cap-parse-r
+                        (copyright/append media-duration-secs
+                                          copyright-lines
+                                          :cue-duration cue-duration
+                                          :cue-gap cue-gap
+                                          :end-gap end-gap)
+                        cap/to-string)))
 
     :overlap
     (b/cond
