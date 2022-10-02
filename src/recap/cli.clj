@@ -1,7 +1,8 @@
 (ns recap.cli
   "Command-line interface abstraction."
   (:refer-clojure :exclude [defn])
-  (:require [clojure.spec.alpha :as s]
+  (:require [clojure.pprint :as pprint]
+            [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [better-cond.core :as b]
             [puget.printer :as puget]
@@ -167,7 +168,10 @@
 
     :parse
     (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))
+           second-arg (-> cmd-parse-r :cmd-args second str str/trim str/lower-case)
+           colourise? (and (not (str/blank? second-arg))
+                           (not= "false" second-arg))]
 
       (r/failed? slurp-r)
       (r/prepend-msg slurp-r "Attempt to read file failed: ")
@@ -178,8 +182,11 @@
       cap-parse-r
 
       :else
-      (puget/cprint cap-parse-r)
-      (r/r :success ""))
+      (do
+        (if colourise?
+          (puget/cprint cap-parse-r)
+          (pprint/pprint cap-parse-r))
+        (r/r :success "")))
 
     :linger
     (b/cond

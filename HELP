@@ -30,8 +30,11 @@ linger <FILE> [<SECONDS>]
 overlap <FILE>
   Find overlapping cues in the given caption file
 
-parse <FILE>
+parse <FILE> [<COLOUR?>]
   Parse the given caption file and output as an EDN map
+  COLOUR?
+    Whether to colourise the output
+    Any value other than "false" will colour the output
 
 restitch <FILE>
   Join cues for better readability (based on punctuation)
