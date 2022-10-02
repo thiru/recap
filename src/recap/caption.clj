@@ -137,6 +137,20 @@
                   "\n")))))
 
 
+(defn to-plain-text
+  "Convert the given cues to text-only format.  I.e. without timestamps and any other caption-
+  specfic metadata."
+  {:args (s/cat :cues ::dspecs/cues)
+   :ret string?}
+  [cues]
+  (->> cues
+       (map :lines)
+       flatten
+       (map #(str % "\n"))
+       str/join
+       str/trim))
+
+
 (defn find-overlapping-cues
   "Check if the given cues contain any cases where more than one cue appears on
   screen at once.

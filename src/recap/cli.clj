@@ -20,7 +20,7 @@
 (def help (-> (slurp "HELP")
               (format version)))
 
-(def primary-commands #{:contiguous :copyright :linger :overlap :parse :restitch})
+(def primary-commands #{:contiguous :copyright :linger :overlap :parse :restitch :text})
 
 (s/def ::cmd-name keyword?)
 (s/def ::cmd-args (s/coll-of string?))
@@ -226,5 +226,22 @@
       cap-parse-r
 
       :else
-      (r/r :success (-> cap-parse-r restitch/restitch cap/to-string)))))
+      (r/r :success (-> cap-parse-r restitch/restitch cap/to-string)))
+
+    :text
+    (b/cond
+      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
+
+      (r/failed? slurp-r)
+      (r/prepend-msg slurp-r "Attempt to read file failed: ")
+
+      let [cap-parse-r (cap/parse slurp-r)]
+
+      (r/failed? cap-parse-r)
+      cap-parse-r
+
+      :else
+      (do
+        (-> cap-parse-r :cues cap/to-plain-text println)
+        (r/r :success "")))))
 

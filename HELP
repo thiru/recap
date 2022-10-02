@@ -39,6 +39,9 @@ parse <FILE> [<COLOUR?>]
 restitch <FILE>
   Join cues for better readability (based on punctuation)
 
+text <FILE>
+  Output text contents only (i.e. without timings, and other captions metadata)
+
 help, --help, -h
   Show this help
 
