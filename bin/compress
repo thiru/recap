@@ -1,0 +1,5 @@
+#!/bin/sh
+
+version=`cat VERSION`
+
+cd target && tar -czvf recap-${version}-x86_64-linux.tar.gz recap
