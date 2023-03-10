@@ -9,7 +9,7 @@
             [utils.results :as r]))
 
 
-(def max-linger-secs-default 3.0)
+(def max-linger-secs-default 2.0)
 
 
 (s/def ::max-linger-secs number?)
