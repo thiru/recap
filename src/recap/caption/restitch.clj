@@ -19,7 +19,7 @@
 
 
 (def default-opts
-  {:absolute-max-chars-per-line 55
+  {:absolute-max-chars-per-line 50
    :breakable-clause-ender-min-chars 18
    :breakable-any-punctuation-min-chars 23
    ;; Same as `:ends-in-clause-ending-punctuation` except adds a comma
