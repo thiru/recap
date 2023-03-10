@@ -26,7 +26,7 @@
    :ends-in-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
    :ends-in-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
    :force-new-cue-tolerance-secs 3
-   :ideal-max-chars-per-line 35
+   :ideal-max-chars-per-line 38
    :max-lines-per-cue 2})
 
 
