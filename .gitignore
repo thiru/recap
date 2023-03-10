@@ -2,6 +2,7 @@
 .cpcache
 .clj-kondo/**
 !.clj-kondo/config.edn
+.lsp/
 .nrepl-port
 classes/
 out/
