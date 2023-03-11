@@ -12,7 +12,8 @@ contiguous <FILE>
 copyright <CAPTIONS FILE> <MEDIA DURATION> <COPYRIGHT FILE> [<CUE DURATION> <CUE GAP> <END GAP>]
   Append copyright cues to the end of the captions
   MEDIA DURATION
-    The total duration of the respective media (seconds)
+    The duration of the respective media
+    This can be in total seconds (a positive integer) or duration format (e.g. 1:30:05)
   COPYRIGHT FILE
     A plain text file containing the copyright cues
     A blank line indicates a separate cue

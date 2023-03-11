@@ -102,8 +102,10 @@
       cap-parse-r
 
       let [media-duration-str (-> cmd-parse-r :cmd-args second)
-           media-duration-secs (c/parse-float media-duration-str
-                                              :fallback 0)]
+           media-duration-secs (if (str/includes? media-duration-str ":")
+                                 (c/duration->secs media-duration-str)
+                                 (c/parse-float media-duration-str
+                                                :fallback 0))]
 
       (zero? media-duration-secs)
       (r/r :error (str "Media duration should be a positive number but was: "
