@@ -245,3 +245,11 @@
         (-> cap-parse-r :cues cap/to-plain-text println)
         (r/r :success "")))))
 
+
+(comment
+  (let [cap-parse-r (-> (c/slurp-file "tmp/one-word.srt")
+                        cap/strip-contiguous-speaker-tags
+                        cap/parse)]
+    (if (r/failed? cap-parse-r)
+      cap-parse-r
+      (r/r :success (-> cap-parse-r restitch/restitch #_cap/to-string)))))

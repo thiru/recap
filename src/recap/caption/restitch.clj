@@ -197,7 +197,7 @@
     (loop [[curr-input-cue & rest-input-cues] (-> caption :cues rest)
            wip-cue (-> caption :cues first)
            final-cues []]
-      (if (empty? rest-input-cues)
+      (if (and (empty? rest-input-cues) (cue/empty-cue? curr-input-cue))
         (assoc caption :cues (conj final-cues wip-cue))
         (let [append-line? (and (not (has-long-gap? wip-cue curr-input-cue))
                                 (not (force-new-cue-for-full-stop? wip-cue))
