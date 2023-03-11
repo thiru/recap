@@ -18,7 +18,7 @@ copyright <CAPTIONS FILE> <MEDIA DURATION> <COPYRIGHT FILE> [<CUE DURATION> <CUE
     A plain text file containing the copyright cues
     A blank line indicates a separate cue
   CUE DURATION
-    The duration of the copyright cues will appear on screen (seconds)
+    The duration the copyright cues will appear on screen (seconds)
   CUE GAP
     The gap between copyright cues (seconds)
   END GAP
