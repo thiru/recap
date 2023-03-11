@@ -133,6 +133,14 @@
                  vec))})
 
 
+(defn text-only
+  "Extract just the text from the given cue (i.e. discarding start/end times)."
+  {:args (s/cat :cue ::dspecs/cue)
+   :ret string?}
+  [cue]
+  (str/join "\n" (:lines cue)))
+
+
 (defn to-string
   "Convert the given cue to a plain string, suitable to be placed in a caption
   file.
@@ -171,4 +179,7 @@
   (join-cues [cue {:start "00:02:00"
                    :end "00:03:00"
                    :lines ["cue2 first line" "cue 2 second line"]}]
-             :concat-lines? false))
+             :concat-lines? false)
+  (text-only {:start "00:02:00"
+              :end "00:03:00"
+              :lines ["first line" "second line"]}))

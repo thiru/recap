@@ -161,6 +161,21 @@
         wip-cue-char-count)))
 
 
+(defn force-new-cue-for-full-stop?
+  "Determine whether to force a new cue when there is full stop outside a quoted or bracketed
+  phrase."
+  {:args (s/cat :cue1 ::dspecs/cue)
+   :ret boolean?}
+  [cue]
+  (let [cue-text (cue/text-only cue)
+        cue-text-length (count cue-text)
+        last-char (nth cue-text (dec cue-text-length))
+        second-last-char (nth cue-text (- cue-text-length 2))]
+    (and (>= cue-text-length (:breakable-clause-ender-min-chars default-opts))
+         (or (= last-char \.) (= last-char \?) (= last-char \!))
+         (not (= second-last-char \.)))))
+
+
 (defn group-lines
   "Group cues according to `max-lines-per-cue` and respecting longish quiet
   gaps."
@@ -185,6 +200,7 @@
       (if (empty? rest-input-cues)
         (assoc caption :cues (conj final-cues wip-cue))
         (let [append-line? (and (not (has-long-gap? wip-cue curr-input-cue))
+                                (not (force-new-cue-for-full-stop? wip-cue))
                                 (< (-> wip-cue :lines count)
                                    max-lines-per-cue))]
           (if append-line?
@@ -196,5 +212,12 @@
                    (conj final-cues wip-cue))))))))
 
 (comment
-  (clause-ender? "sdf;"))
-
+  (clause-ender? "sdf;")
+  (force-new-cue-for-full-stop? {:lines ["the pain that strong pain of -"
+                                         "very naturally, of course, no?"]
+                                 :start "00:00:00"
+                                 :end "00:00:00"})
+  (force-new-cue-for-full-stop? {:lines ["the pain that strong pain of -"
+                                         "very naturally, of course, no..."]
+                                 :start "00:00:00"
+                                 :end "00:00:00"}))
