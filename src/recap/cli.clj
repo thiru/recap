@@ -111,7 +111,9 @@
       (r/r :error (str "Media duration should be a positive number but was: "
                        media-duration-str))
 
-      let [copyright-file-name (-> cmd-parse-r :cmd-args (nth 2 ""))
+      let [copyright-file-arg (-> cmd-parse-r :cmd-args (nth 2 ""))
+           has-copyright-date? (str/includes? copyright-file-arg ":")
+           [copyright-file-name copyright-date] (str/split copyright-file-arg #":")
            copyright-file-r (c/slurp-file copyright-file-name)]
 
       (r/failed? copyright-file-r)
@@ -142,6 +144,7 @@
       (r/r :success (-> cap-parse-r
                         (copyright/append media-duration-secs
                                           copyright-lines
+                                          :date copyright-date
                                           :cue-duration cue-duration
                                           :cue-gap cue-gap
                                           :end-gap end-gap)

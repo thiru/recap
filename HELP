@@ -9,14 +9,17 @@ COMMANDS:
 contiguous <FILE>
   Find contiguous, same speaker tags and remove them
 
-copyright <CAPTIONS FILE> <MEDIA DURATION> <COPYRIGHT FILE> [<CUE DURATION> <CUE GAP> <END GAP>]
+copyright <CAPTIONS FILE> <MEDIA DURATION> <COPYRIGHT FILE[:DATE]> [<CUE DURATION> <CUE GAP> <END GAP>]
   Append copyright cues to the end of the captions
   MEDIA DURATION
     The duration of the respective media
     This can be in total seconds (a positive integer) or duration format (e.g. 1:30:05)
-  COPYRIGHT FILE
+  COPYRIGHT FILE[:DATE]
     A plain text file containing the copyright cues
     A blank line indicates a separate cue
+    A custom date can be specified like so: copyright.txt:2023
+      In this case all instances of the text "{DATE}" in copyright.txt will be replaced with 2023
+    If no date is specified and the text "{DATE}" exists in copyright.txt it will be replaced with the current year
   CUE DURATION
     The duration the copyright cues will appear on screen (seconds)
   CUE GAP
