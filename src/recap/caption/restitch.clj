@@ -170,7 +170,7 @@
   (let [cue-text (cue/text-only cue)
         cue-text-length (count cue-text)
         last-char (nth cue-text (dec cue-text-length))
-        second-last-char (nth cue-text (- cue-text-length 2))]
+        second-last-char (nth cue-text (- cue-text-length 2) nil)]
     (and (>= cue-text-length (:breakable-clause-ender-min-chars default-opts))
          (or (= last-char \.) (= last-char \?) (= last-char \!))
          (not (= second-last-char \.)))))
