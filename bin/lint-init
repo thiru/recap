@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Initialise clj-kondo. This must be run initially otherwise there will be several errors/warning on lint.
+
+mkdir -p .clj-kondo
+clj-kondo --lint "$(clojure -Spath)" --dependencies --parallel --copy-configs

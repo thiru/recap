@@ -1,44 +1,37 @@
 (ns user
+
   "Initial namespace loaded when using a REPL (e.g. using `clj`)."
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.java.shell :as sh]
-            [clojure.pprint :refer :all]
-            [clojure.reflect :refer :all]
-            [clojure.repl :refer :all]
-            [clojure.spec.alpha :as s]
-            [clojure.string :as str]
-            [expound.alpha :as expound]
-            [puget.printer :as puget]
-            [reloader.core :as reloader]
-            [utils.common :as c]
-            [utils.results :as r]
-            [recap.cli :as cli]
-            [recap.caption :as cap]
-            [recap.caption.copyright :as copyright]
-            [recap.caption.cue :as cue]
-            [recap.main :as main]
-            [recap.caption.restitch :as restitch]))
+
+  {:clj-kondo/config '{:linters {:unused-namespace {:level :off}
+                                 :unused-referred-var {:level :off}}}}
+  (:require
+    [clojure.edn :as edn]
+    [clojure.java.io :as io]
+    [clojure.java.shell :as sh]
+    [clojure.pprint :as pp]
+    [clojure.reflect :as reflect]
+    [clojure.spec.alpha :as s]
+    [clojure.string :as str]
+    [rebel-readline.main :as rebel]
+    [recap.caption :as cap]
+    [recap.caption.copyright :as copyright]
+    [recap.caption.cue :as cue]
+    [recap.caption.restitch :as restitch]
+    [recap.cli :as cli]
+    [recap.main :as main]
+    [utils.common :as c]
+    [utils.nrepl :as nrepl]
+    [utils.printing :as printing :refer [PP]]
+    [utils.results :as r]))
 
 (defonce initialised? (atom false))
 
-(defonce ^{:doc "A short-hand to quit gracefully (otherwise rebel-readline hangs the process)."}
-  q (delay (System/exit 0)))
-
-(defmacro PP
-  "Convenience macro to pretty-print last evaluated result at the REPL."
-  []
-  `(puget/cprint *1))
-
-(defn install-expound-printer
-  "Replace Clojure Spec's default printer with Expound's printer.
-
-  Ref: https://cljdoc.org/d/expound/expound/0.9.0/doc/faq"
-  []
-  (alter-var-root #'s/*explain-out* (constantly expound/printer)))
-
 (when (not @initialised?)
   (reset! initialised? true)
-  (install-expound-printer)
-  (reloader/start ["src" "dev"]))
-
+  (printing/install-expound-printer)
+  (nrepl/start-server)
+  ;; Blocking call:
+  (rebel/-main)
+  (nrepl/stop-server)
+  ;; HACK: rebel-readline causes process to hang and not quit without this:
+  (System/exit 0))

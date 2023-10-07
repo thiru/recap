@@ -3,4 +3,3 @@
 # Run app using Clojure CLI.
 
 clojure -J-Dclojure.spec.compile-asserts=false -M -m recap.main "$@"
-

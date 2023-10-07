@@ -1,23 +1,21 @@
 {:aliases
  {;; Start dev-oriented environment:
-  :dev {:extra-deps
-        {;; Hot code reloading (JVM only):
-         thiru/clj-reloader {:git/url "https://github.com/thiru/clj-reloader"
-                             :sha "8646987342602ab2c6fd0b966386eacda0844f64"}}
+  :dev {:extra-deps {;; Friendlier spec error messages:
+                     expound/expound {:mvn/version "0.9.0"}
+                     ;; Nicer REPL:
+                     com.bhauman/rebel-readline {:mvn/version "0.1.4"}
+                     ;; nREPL client/server:
+                     nrepl/nrepl {:mvn/version "1.0.0"}}
         :extra-paths ["dev"]
-        :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]}}
+        :jvm-opts ["-XX:-OmitStackTraceInFastThrow"]}
+  :outdated {:deps {com.github.liquidz/antq {:mvn/version "2.7.1133"}}
+             :main-opts ["-m" "antq.core"]}}
  :paths ["src"]
  :deps
  {org.clojure/clojure {:mvn/version "1.11.1"}
 
   ;; Improved cond, etc. with less nesting:
   better-cond/better-cond {:mvn/version "2.1.5"}
-
-  ;; Friendlier spec error messages:
-  expound/expound {:mvn/version "0.9.0"}
-
-  ;; Prettier exception printing:
-  io.aviso/pretty {:mvn/version "1.4.4"}
 
   ;; Colourised Clojure pretty-printer:
   mvxcvi/puget {:mvn/version "1.3.4"}}}
