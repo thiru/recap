@@ -14,9 +14,9 @@
   {:absolute-max-chars-per-line 50
    :breakable-clause-ender-min-chars 8
    :breakable-any-punctuation-min-chars 23
-   ;; Same as `:ends-in-clause-ending-punctuation` except adds a comma
-   :ends-in-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
-   :ends-in-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
+   ;; The only difference from `:ends-with-clause-ending-punctuation` is this includes a comma
+   :ends-with-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
+   :ends-with-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
    :force-new-cue-tolerance-secs 3
    :ideal-max-chars-per-line 38
    :max-lines-per-cue 2})

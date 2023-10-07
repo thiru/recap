@@ -60,14 +60,14 @@
   {:args (s/cat :text string?)
    :ret boolean?}
   [text]
-  (boolean (re-find (:ends-in-clause-ending-punctuation default-opts) text)))
+  (boolean (re-find (:ends-with-clause-ending-punctuation default-opts) text)))
 
 
 (defn punctuation-ender?
   {:args (s/cat :text string?)
    :ret boolean?}
   [text]
-  (boolean (re-find (:ends-in-any-punctuation default-opts) text)))
+  (boolean (re-find (:ends-with-any-punctuation default-opts) text)))
 
 
 (defn has-long-gap?
