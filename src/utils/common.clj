@@ -13,12 +13,46 @@
 (s/def ::file (s/or :file-path (s/nilable string?)
                     :file-obj #(instance? java.io.File %)))
 
+
+(defn find-first
+  "Get the first element in `coll` where `pred` returns truthy when applied to it."
+  [pred coll]
+  (some #(when (pred %) %) coll))
+
+
+(defn java-class-name=>clj-fn-name [fn]
+  (let [kebabified (str/replace (str fn) "_" "-")
+        seg1 (str/split kebabified #"\$")
+        seg2 (str/split (second seg1) #"\@")]
+    (str (first seg1) \/ (first seg2))))
+
+(defn ignored-stack-element? [ste]
+  (let [ignored #{"get_all_callers" "get_last_caller" "dbg" "clojure.lang" "clojure.spec" "swank" "nrepl" "eval"}
+        class-name (.getClassName ste)]
+    (some #(re-find (re-pattern %) class-name)
+          ignored)))
+
+(defn get-all-callers []
+  (-> (Throwable.) .fillInStackTrace .getStackTrace))
+
+(defn java-stack-info=>clj-stack-info
+  [java-stack-info]
+  {:fn (-> java-stack-info .getClassName java-class-name=>clj-fn-name)
+   :line (-> java-stack-info .getLineNumber)})
+
+(defn get-last-caller []
+  (->> (get-all-callers)
+       vec
+       (find-first (comp not ignored-stack-element?))
+       java-stack-info=>clj-stack-info))
+
 (defmacro spy
   "A simpler version of Timbre's spy which simply pretty-prints to stdout
   and returns the eval'd expression."
   [expr]
-  `(let [evaled# ~expr]
-     (print (str '~expr " => "))
+  `(let [evaled# ~expr
+         caller# (get-last-caller)]
+     (print (format "[%s:%d] %s => " (:fn caller#) (:line caller#) '~expr))
      (puget/cprint evaled#)
      evaled#))
 
