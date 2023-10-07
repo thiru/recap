@@ -12,9 +12,7 @@ The need for this tool was born out of using STT tools like [Otter](https://otte
 
 We realised that much of the editing could be accomplished programmatically if we knew the time position of each word. Luckily Otter and Trint allow you to export captions with just a one word (or very close to that) per line. With such a caption file we could **restitch** the words and create captions that read more fluently and to our liking. For example, ending a line or caption at a period, semi-colon or long pause (without audio) just to name a few.
 
-See `default-opts` in [restitch.clj](./src/recap/caption/restitch.clj) for some configurable knobs.
-
-TODO: expose these knobs in CLI.
+See `default-config` in [restitch.clj](./src/recap/config.clj) for some configurable options.
 
 ## Usage
 

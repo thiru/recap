@@ -10,6 +10,9 @@
             [utils.results :as r]))
 
 
+(s/def ::file (s/or :file-path (s/nilable string?)
+                    :file-obj #(instance? java.io.File %)))
+
 (defmacro spy
   "A simpler version of Timbre's spy which simply pretty-prints to stdout
   and returns the eval'd expression."
@@ -47,19 +50,39 @@
     (apply format formatter args)))
 
 
+(defn join-paths
+  "Join the given path segments.
+
+  If any of the segments are `nil` it will be ignored."
+  {:args (s/cat :segments (s/* (s/nilable string?)))
+   :ret string?}
+  [& segments]
+  (.toString (apply io/file (map #(or % "") segments))))
+
+
+(defn load-if-file
+  "Load the file at the given path if it exists."
+  {:args (s/cat :file ::file)
+   :ret (s/and ::r/result (s/keys :opt-un [::file]))}
+  [file]
+  (let [file-obj (if (instance? java.io.File file)
+                   file
+                   (io/as-file file))]
+    (if (and file-obj (.exists file-obj))
+      (r/r :success "File successfully loaded" {:file file-obj})
+      (r/r :error (format "File '%s' was not found or inaccessible" (.toString (or file "")))))))
+
+
 (defn slurp-file
   "Read all contents of the given file."
-  {:args (s/cat :file-path (s/nilable string?))
+  {:args (s/cat :file ::file)
    :ret (s/or :content string?
-              :error-result :r/result)}
-  [file-path]
-  (if (str/blank? file-path)
-    (r/r :error "No file was provided")
-    (let [file (io/file file-path)]
-      (if (not (.exists file))
-        (r/r :error
-             (format "File '%s' was not found or inaccessible" file-path))
-        (slurp file)))))
+              :error-result ::r/result)}
+  [file]
+  (let [file-r (load-if-file file)]
+    (if (r/success? file-r)
+      (slurp (:file file-r))
+      file-r)))
 
 
 (defn parse-int

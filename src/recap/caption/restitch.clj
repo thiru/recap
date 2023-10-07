@@ -5,6 +5,7 @@
             [recap.caption.cue :as cue]
             [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
+            [recap.config :as cfg]
             [utils.common :as u]
             [utils.specin :refer [defn]]
             [utils.results :as r]))
@@ -18,16 +19,7 @@
 (s/def ::max-lines-per-cue int?)
 
 
-(def default-opts
-  {:absolute-max-chars-per-line 50
-   :breakable-clause-ender-min-chars 8
-   :breakable-any-punctuation-min-chars 23
-   ;; Same as `:ends-in-clause-ending-punctuation` except adds a comma
-   :ends-in-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
-   :ends-in-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
-   :force-new-cue-tolerance-secs 3
-   :ideal-max-chars-per-line 38
-   :max-lines-per-cue 2})
+(def default-opts (cfg/load-config))
 
 
 (defn restitch

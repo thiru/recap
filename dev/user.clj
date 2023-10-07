@@ -18,8 +18,9 @@
     [recap.caption.cue :as cue]
     [recap.caption.restitch :as restitch]
     [recap.cli :as cli]
+    [recap.config :as cfg]
     [recap.main :as main]
-    [utils.common :as c]
+    [utils.common :as u]
     [utils.nrepl :as nrepl]
     [utils.printing :as printing :refer [PP]]
     [utils.results :as r]))
