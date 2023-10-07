@@ -35,7 +35,7 @@
   [args]
   (if (empty? args)
     (r/r :error "No command specified. Try running: recap --help"
-         {:cmd-name nil
+         {:cmd-name :unspecified
           :cmd-args []})
 
     (let [cmd-name (first args)
@@ -248,7 +248,10 @@
       :else
       (do
         (-> cap-parse-r :cues cap/to-plain-text println)
-        (r/r :success "")))))
+        (r/r :success "")))
+
+    ;; case else
+    (r/r :error "Command unspecified")))
 
 
 (comment

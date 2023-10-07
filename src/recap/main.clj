@@ -16,5 +16,8 @@
   Returns 0 on success, otherwise a positive integer."
   {:ret nat-int?}
   [& args]
-  (-> args cli/parse cli/run-cmd c/exit!))
+  (-> (or args [])
+      cli/parse
+      cli/run-cmd
+      c/exit!))
 
