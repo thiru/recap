@@ -8,6 +8,9 @@
             [clojure.spec.test.alpha :as stest]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (declare qualify-symbol
          specin-form)
 

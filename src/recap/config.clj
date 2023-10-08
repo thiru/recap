@@ -11,6 +11,9 @@
     [utils.specin :refer [defn]]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (defn load-default-config
   {:ret map?}
   []

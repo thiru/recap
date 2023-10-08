@@ -13,6 +13,9 @@
             [utils.results :as r]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (defn empty-caption?
   "Determine whether the given caption has any content (i.e. no cues)."
   {:args (s/cat :caption ::dspecs/caption)

@@ -11,6 +11,9 @@
             [utils.results :as r]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (declare group-lines
          start-new-cue?)
 

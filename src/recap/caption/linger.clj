@@ -9,6 +9,9 @@
             [utils.results :as r]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (def max-linger-secs-default 2.0)
 
 

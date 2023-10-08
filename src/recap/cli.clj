@@ -15,6 +15,9 @@
             [recap.caption.restitch :as restitch]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (def version (-> (slurp "VERSION")
                  str/trim))
 (def help (-> (slurp "HELP")

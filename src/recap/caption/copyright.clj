@@ -9,6 +9,9 @@
   (:import (java.time LocalDate)))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (def defaults {:cue-duration 3.0
                :cue-gap 0.0
                :end-gap 2.0})

@@ -10,6 +10,9 @@
             [utils.results :as r]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (s/def ::file (s/or :file-path (s/nilable string?)
                     :file-obj #(instance? java.io.File %)))
 
@@ -26,7 +29,13 @@
         seg2 (str/split (second seg1) #"\@")]
     (str (first seg1) \/ (first seg2))))
 
-(defn ignored-stack-element? [ste]
+(defn as-clj-stack-info
+  [^java.lang.StackTraceElement ste]
+  {:fn (-> ste .getClassName java-class-name=>clj-fn-name)
+   :line (-> ste .getLineNumber)})
+
+(defn ignored-stack-element?
+  [^java.lang.StackTraceElement ste]
   (let [ignored #{"get_all_callers" "get_last_caller" "dbg" "clojure.lang" "clojure.spec" "swank" "nrepl" "eval"}
         class-name (.getClassName ste)]
     (some #(re-find (re-pattern %) class-name)
@@ -35,16 +44,11 @@
 (defn get-all-callers []
   (-> (Throwable.) .fillInStackTrace .getStackTrace))
 
-(defn java-stack-info=>clj-stack-info
-  [java-stack-info]
-  {:fn (-> java-stack-info .getClassName java-class-name=>clj-fn-name)
-   :line (-> java-stack-info .getLineNumber)})
-
 (defn get-last-caller []
   (->> (get-all-callers)
        vec
        (find-first (comp not ignored-stack-element?))
-       java-stack-info=>clj-stack-info))
+       as-clj-stack-info))
 
 (defmacro spy
   "A simpler version of Timbre's spy which simply pretty-prints to stdout
@@ -91,7 +95,7 @@
   {:args (s/cat :segments (s/* (s/nilable string?)))
    :ret string?}
   [& segments]
-  (.toString (apply io/file (map #(or % "") segments))))
+  (.toString ^java.io.File (apply io/file (map #(or % "") segments))))
 
 
 (defn load-if-file
@@ -99,12 +103,12 @@
   {:args (s/cat :file ::file)
    :ret (s/and ::r/result (s/keys :opt-un [::file]))}
   [file]
-  (let [file-obj (if (instance? java.io.File file)
-                   file
-                   (io/as-file file))]
-    (if (and file-obj (.exists file-obj))
+  (let [^java.io.File file-obj (io/as-file file)]
+    (if (and file-obj
+             (.exists ^java.io.File file-obj)) ; type hint needed for GraalVM image
       (r/r :success "File successfully loaded" {:file file-obj})
-      (r/r :error (format "File '%s' was not found or inaccessible" (.toString (or file "")))))))
+      (r/r :error (format "File '%s' was not found or inaccessible"
+                          (or file ""))))))
 
 
 (defn slurp-file

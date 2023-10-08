@@ -6,6 +6,9 @@
             [utils.specin :refer [defn]]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (declare get-speaker-tag-srt
          get-speaker-tag-webvtt)
 

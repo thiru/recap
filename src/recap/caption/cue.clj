@@ -10,6 +10,9 @@
             [utils.results :as r]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (defn empty-cue?
   "Determine whether the given cue has any content (i.e. non-blank content)."
   {:args (s/cat :cue (s/nilable ::dspecs/cue))

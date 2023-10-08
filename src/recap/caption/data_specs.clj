@@ -3,6 +3,9 @@
   (:require [clojure.spec.alpha :as s]))
 
 
+(set! *warn-on-reflection* true) ; for graalvm
+
+
 (s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]?\d*" %))
 
 (s/def ::start ::duration)
