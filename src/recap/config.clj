@@ -4,22 +4,19 @@
   (:require
     [better-cond.core :as b]
     [clojure.edn :as edn]
+    [clojure.java.io :as io]
     [clojure.spec.alpha :as s]
     [utils.common :as u]
     [utils.results :as r]
     [utils.specin :refer [defn]]))
 
 
-(def default-config
-  {:absolute-max-chars-per-line 50
-   :breakable-clause-ender-min-chars 8
-   :breakable-any-punctuation-min-chars 23
-   ;; The only difference from `:ends-with-clause-ending-punctuation` is this includes a comma
-   :ends-with-any-punctuation #"[,.!?;:\]'\"—–-]['\"]?$"
-   :ends-with-clause-ending-punctuation #"[.!?;:\]'\"—–-]['\"]?$"
-   :force-new-cue-tolerance-secs 3
-   :ideal-max-chars-per-line 38
-   :max-lines-per-cue 2})
+(defn load-default-config
+  {:ret map?}
+  []
+  (-> (io/resource "default-config.edn")
+      slurp
+      edn/read-string))
 
 (defn read-config-file
   {:args (s/cat :file-obj #(instance? java.io.File %))
@@ -29,7 +26,7 @@
   (->> file-obj
        u/slurp-file
        edn/read-string
-       (merge default-config)))
+       (merge (load-default-config))))
 
 (defn load-config
   "Load config.edn from one of these locations:
@@ -59,5 +56,5 @@
 
     :else
     (do
-      (println "No user config.edn found, using defaults")
-      default-config)))
+      (println "No user config.edn found, using defaults") ; DEBUG
+      (load-default-config))))

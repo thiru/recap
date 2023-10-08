@@ -19,7 +19,10 @@
 (s/def ::max-lines-per-cue int?)
 
 
-(def default-opts (cfg/load-config))
+(def default-opts
+  (delay (-> (cfg/load-config)
+             (update :ends-with-any-punctuation re-pattern)
+             (update :ends-with-clause-ending-punctuation re-pattern))))
 
 
 (defn restitch
@@ -29,7 +32,7 @@
                 :kwargs (s/keys* :opt-un []))
    :ret ::dspecs/caption}
   [caption & {:keys [opts]
-              :or {opts default-opts}}]
+              :or {opts @default-opts}}]
   (b/cond
     (empty? (:cues caption))
     caption
@@ -60,14 +63,14 @@
   {:args (s/cat :text string?)
    :ret boolean?}
   [text]
-  (boolean (re-find (:ends-with-clause-ending-punctuation default-opts) text)))
+  (boolean (re-find (:ends-with-clause-ending-punctuation @default-opts) text)))
 
 
 (defn punctuation-ender?
   {:args (s/cat :text string?)
    :ret boolean?}
   [text]
-  (boolean (re-find (:ends-with-any-punctuation default-opts) text)))
+  (boolean (re-find (:ends-with-any-punctuation @default-opts) text)))
 
 
 (defn has-long-gap?
@@ -81,7 +84,7 @@
    :ret boolean?}
   [cue1 cue2 & {:keys [force-new-cue-tolerance-secs]
                 :or {force-new-cue-tolerance-secs
-                     (:force-new-cue-tolerance-secs default-opts)}}]
+                     (:force-new-cue-tolerance-secs @default-opts)}}]
   (let [cue-gap-secs (cue/gap-inbetween cue1 cue2)]
     (if (r/failed? cue-gap-secs)
       (do (r/print-msg cue-gap-secs)
@@ -163,7 +166,7 @@
         cue-text-length (count cue-text)
         last-char (nth cue-text (dec cue-text-length))
         second-last-char (nth cue-text (- cue-text-length 2) nil)]
-    (and (>= cue-text-length (:breakable-clause-ender-min-chars default-opts))
+    (and (>= cue-text-length (:breakable-clause-ender-min-chars @default-opts))
          (or (= last-char \.) (= last-char \?) (= last-char \!))
          (not (= second-last-char \.)))))
 
@@ -175,7 +178,7 @@
                 :kwargs (s/keys* :opt-un [::max-lines-per-cue]))
    :ret ::dspecs/caption}
   [caption & {:keys [max-lines-per-cue]
-              :or {max-lines-per-cue (:max-lines-per-cue default-opts)}}]
+              :or {max-lines-per-cue (:max-lines-per-cue @default-opts)}}]
   (b/cond
     (empty? (:cues caption))
     caption
