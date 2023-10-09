@@ -2,62 +2,122 @@
 
 Recap is short for re-caption.
 
-The main and original goal of this tool is to alter captions so that they read better.
-
-Some additional utilities around caption files are also provided.
+The original (and main) goal of this tool was to alter captions so that they read better. Since then some additional captions related utilities have been added.
 
 ## Background
 
-The need for this tool was born out of using STT tools like [Otter](https://otter.ai/home) and [Trint](https://trint.com/). These tools do a great job at allowing users to create accurate transcripts. They also provide the ability to export a captions file with some simple options like: maximum number of characters per line, number of lines per caption, etc. However these captions as is, don't read particularly well. So, some extra work was needed to be done in a caption editor, such as [Amara](https://amara.org/).
+The need for this tool was born out of using STT tools like [Otter](https://otter.ai/home) and [Trint](https://trint.com/). These tools do a great job at allowing users to create accurate transcripts. They also provide the ability to export a captions file with some simple options like: maximum number of characters per line, number of lines per caption, etc. However these captions as is, don't read particularly well. So, some extra work was needed to be done in a caption editor such as [Amara](https://amara.org/).
 
-We realised that much of the editing could be accomplished programmatically if we knew the time position of each word. Luckily Otter and Trint allow you to export captions with just a one word (or very close to that) per line. With such a caption file we could **restitch** the words and create captions that read more fluently and to our liking. For example, ending a line or caption at a period, semi-colon or long pause (without audio) just to name a few.
-
-See `default-config` in [restitch.clj](./src/recap/config.clj) for some configurable options.
+We realised that much of the editing could be accomplished programmatically if we knew the time position of each word. Luckily Otter and Trint allow you to export captions with just a one word (or very close to that) per line. With such a caption file we could **restitch** the words and create captions that read more fluently and to our liking. For example, ending a line or caption at a period, semi-colon or long pause just to name a few possibilities.
 
 ## Usage
 
 There are several ways to use recap.
 
-1) Likely the easiest way is to download the stand-alone executable in [Releases](https://github.com/thiru/recap/releases) (if your OS/platform is supported) and just run it.
-2) The next easiest is to install [Babashka](https://github.com/babashka/babashka), clone this repo and run `bin/bb`. This will run recap from source but is just about as fast as the stand-alone binary.
-3) Another option is to install [Clojure](https://clojure.org/), clone this repo and run `bin/app`. recap launches much slower this way as we're starting up a regular JVM.
-4) If you're familiar with Clojure you can launch the REPL via `bin/dev` and use recap this way.
+1) Download the stand-alone executable in [Releases](https://github.com/thiru/recap/releases) (if your OS/platform is supported).
+2) Install [Babashka](https://github.com/babashka/babashka), clone this repo and run `bin/bb`. This will run recap from source but is just about as fast as the stand-alone binary.
+3) Install [Clojure](https://clojure.org/), clone this repo and run `bin/app`. recap launches much slower this way as we're starting up a regular JVM.
 
 ### Examples
 
-The examples below assume you're using the stand-alone executable. If you're using Babashka or the Clojure CLI instead simply replace `recap` with `bin/bb` or `bin/app`.
+The examples below assume you're using the stand-alone executable. If you're using Babashka or the Clojure CLI instead simply replace `recap` with `bin/bb` or `bin/app`, respectively.
 
-Restitch the captions in _input.vtt_ to read better and save to _output.vtt_:
+-----
+
+Restitch the captions in _input.vtt_ to read better and save to _output.vtt_. As mentioned previously this was the original intent of this app. Ideally _input.vtt_ contains captions with as few words per caption as possible. The restitching process works best this way.
 
 ```shell
 $ recap restitch input.vtt > output.vtt
 ```
 
-Extend the time each caption appears on screen by 1 second in _input.vtt_ and save to _output.vtt_:
+-----
+
+Extend the time each caption appears on screen by 1 second in _input.vtt_ and save to _output.vtt_.
 
 ```shell
 $ recap linger input.vtt 1 > output.vtt
 ```
 
-Strip out contiguous speaker tags in _input.vtt_ and save to _output.vtt_. The need for this is due to Trint not having the option to only show the speaker tag when there is a change in speaker. It is either always shown in _every single_ caption or not at all:
+-----
+
+Strip out contiguous speaker tags in _input.vtt_ and save to _output.vtt_. The need for this is due to Trint not having the option to only show a speaker tag when there is a change in speaker. It is either shown in _every single_ caption or not at all.
 
 ```shell
 $ recap contiguous input.vtt > output.vtt
 ```
 
-Look for overlapping captions in _input.vtt_ and report them. The need for this came out of a bug in Otter that would create overlapping captions due to an inconsitency between the text and audio during the STT process:
+-----
+
+Look for overlapping captions in _input.vtt_ and report them. The need for this came out of a bug in Otter that would create overlapping captions due to an inconsitency between the text and audio during the STT process.
 
 ```shell
 $ recap text input.vtt > output.txt
 ```
 
-Extract just the text (minus timing metadata, etc) from _input.vtt_ and save to _output.txt_:
+-----
+
+Extract just the text (minus timing metadata, etc.) from _input.vtt_ and save to _output.txt_.
 
 ```shell
 $ recap text input.vtt > output.txt
 ```
 
-## Develop
+-----
+
+Parse _input.vtt_ as a Clojure map and save it to _output.edn_.
+
+```shell
+$ recap parse input.vtt > output.edn
+```
+
+-----
+
+Show help
+
+```shell
+$ recap --help
+```
+
+### Config
+
+See [default-config.edn](./resources/default-config.edn) for configurable options and their default values.
+
+You can supply your own config by creating an EDN file and placing it in one of the following locations:
+
+- ./config.edn (the current working directory)
+- $XDG_CONFIG_HOME/recap/config.edn
+- $HOME/.config/recap/config.edn
+
+What follows is a description of all available options. All of these apply to the **restitch** command.
+
+- `:absolute-max-chars-per-line`
+    - default `50`
+    - Specifies a hard upper limit on the number of characters allowed on a line
+    - This rule has the highest precedence
+- `:breakable-clause-ender-min-chars`
+    - default `8`
+    - A new line is created if a at least this number of characters have already been seen and the next word ends in a character specified by `:ends-with-clause-ending-punctuation`
+- `:breakable-any-punctuation-min-chars`
+    - default `23`
+    - A new line is created if at least this number of characters have already been seen and the next word ends in a character specified by `:ends-with-any-punctuation`
+- `:ends-with-any-punctuation`
+    - default `"[,.!?;:\\]'\"—–-]['\"]?$"`
+    - Specifies a regular expression that matches text ending in any punctuation mark
+    - The only difference from `:ends-with-clause-ending-punctuation` is that this includes a comma
+- `:ends-with-clause-ending-punctuation`
+    - default `"[.!?;:\\]'\"—–-]['\"]?$"`
+    - Specifies a regular expression that matches text ending in a "clause ending" punctuation mark
+- `:force-new-cue-tolerance-secs`
+    - default `3`
+    - A new caption/cue is created if there are at least this many seconds between the current and next word
+- `:ideal-max-chars-per-line`
+    - default `38`
+    - Specifies the ideal number of characters in a line, when not in conflict with any of the other rules
+- `:max-lines-per-cue`
+    - default `2`
+    - Specifies the maximum number of lines per caption/cue
+
+## Development
 
 This app is developed in [Clojure](https://clojure.org/).
 
@@ -72,4 +132,3 @@ To build as a stand-alone binary using GraalVM:
 ```shell
 $ bin/graalify
 ```
-
