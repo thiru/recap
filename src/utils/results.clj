@@ -121,10 +121,11 @@
   {:args (s/cat :result ::result)
    :ret nil?}
   [result] (when (not (empty? (or (:message result) "")))
-             (if (success? result)
-               (println (:message result))
+             (if (or (failed? result)
+                     (warned? result))
                (binding [*out* *err*]
-                 (println (:message result))))))
+                 (println (:message result)))
+               (println (:message result)))))
 
 
 (comment
