@@ -4,7 +4,6 @@
   (:require
     [better-cond.core :as b]
     [clojure.edn :as edn]
-    [clojure.java.io :as io]
     [clojure.spec.alpha :as s]
     [utils.common :as u]
     [utils.results :as r]
@@ -14,10 +13,9 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
-(defn load-default-config
-  {:ret map?}
-  []
-  (-> (io/resource "default-config.edn")
+(def default-config
+  "Default config (intentionally loaded at compile-time)."
+  (-> "default-config.edn"
       slurp
       edn/read-string))
 
@@ -29,7 +27,7 @@
   (->> file-obj
        u/slurp-file
        edn/read-string
-       (merge (load-default-config))))
+       (merge default-config)))
 
 (defn load-config
   "Load config.edn from one of these locations:
@@ -60,4 +58,4 @@
     :else
     (do
       (r/print-msg (r/r :warn "No user config.edn found, using defaults")) ; DEBUG
-      (load-default-config))))
+      default-config)))

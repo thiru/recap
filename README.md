@@ -80,7 +80,7 @@ $ recap --help
 
 ### Config
 
-See [default-config.edn](./resources/default-config.edn) for configurable options and their default values.
+See [default-config.edn](./default-config.edn) for configurable options and their default values.
 
 You can supply your own config by creating an EDN file and placing it in one of the following locations:
 
