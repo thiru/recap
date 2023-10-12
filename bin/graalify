@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 # Build self-contained executable using GraalVM.
+# See this link for a reference native-image options:
+# https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOptions/
 
 if ! command -v native-image &> /dev/null; then
   echo 'GraalVM native-image command not found'
@@ -26,7 +28,6 @@ native-image \
   --static \
   --verbose \
   --no-fallback \
-  --no-server \
   --report-unsupported-elements-at-runtime \
   "-J-Dclojure.spec.compile-asserts=false" \
   "-J-Xmx16g" \
