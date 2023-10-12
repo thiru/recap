@@ -59,5 +59,5 @@
 
     :else
     (do
-      (println "No user config.edn found, using defaults") ; DEBUG
+      (r/print-msg (r/r :warn "No user config.edn found, using defaults")) ; DEBUG
       (load-default-config))))
