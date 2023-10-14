@@ -14,7 +14,6 @@
     [clojure.string :as str]
     [rebel-readline.main :as rebel]
     [recap.caption :as cap]
-    [recap.caption.copyright :as copyright]
     [recap.caption.cue :as cue]
     [recap.caption.restitch :as restitch]
     [recap.cli :as cli]
