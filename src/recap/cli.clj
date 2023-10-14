@@ -116,7 +116,7 @@
     (b/cond
       let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))
            second-arg (-> cmd-parse-r :cmd-args second str str/trim str/lower-case)
-           colourise? (and (not (str/blank? second-arg))
+           no-colour? (and (not (str/blank? second-arg))
                            (not= "false" second-arg))]
 
       (r/failed? slurp-r)
@@ -129,9 +129,9 @@
 
       :else
       (do
-        (if colourise?
-          (puget/cprint cap-parse-r)
-          (pprint/pprint cap-parse-r))
+        (if no-colour?
+          (pprint/pprint cap-parse-r)
+          (puget/cprint cap-parse-r))
         (r/r :success "")))
 
     :linger
