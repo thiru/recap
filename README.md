@@ -85,8 +85,11 @@ See [default-config.edn](./default-config.edn) for configurable options and thei
 You can supply your own config by creating an EDN file and placing it in one of the following locations:
 
 - ./config.edn (the current working directory)
-- $XDG_CONFIG_HOME/recap/config.edn
-- $HOME/.config/recap/config.edn
+- user application data directory
+  - $XDG_CONFIG_HOME/recap/config.edn (Linux)
+  - %LOCALAPPDATA%/recap/config.edn (Windows)
+  - ~/Library/Preferences/recap/config.edn (Mac)
+- ~/.config/recap/config.edn
 
 What follows is a description of all available options. All of these apply to the **restitch** command.
 

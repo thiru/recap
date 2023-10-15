@@ -17,6 +17,23 @@
                     :file-obj #(instance? java.io.File %)))
 
 
+(def os
+  "Get the current OS as a keyword."
+  (delay (let [os-str (str/lower-case (System/getProperty "os.name"))]
+           (cond
+             (<= 0 (or (str/index-of os-str "linux") -1))
+             :linux
+
+             (<= 0 (or (str/index-of os-str "windows") -1))
+             :windows
+
+             (<= 0 (or (str/index-of os-str "mac") -1))
+             :mac
+
+             :else
+             (keyword (str "unknown-" os-str))))))
+
+
 (defn find-first
   "Get the first element in `coll` where `pred` returns truthy when applied to it."
   [pred coll]
@@ -216,4 +233,3 @@
            (if show-millis?
              (format ".%03d" milliseconds)
              "")))))
-

@@ -33,8 +33,11 @@
   "Load config.edn from one of these locations:
 
   - current working directory
-  - $XDG_CONFIG_HOME/recap
-  - $HOME/.config/recap"
+  - user application data directory
+    - $XDG_CONFIG_HOME/recap (Linux)
+    - %LOCALAPPDATA%/recap (Windows)
+    - ~/Library/Preferences/recap (Mac)
+  - ~/.config/recap"
   {:ret ::r/result}
   []
   (b/cond
@@ -43,14 +46,18 @@
     (r/success? cfg-file)
     (read-config-file (:file cfg-file))
 
-    let [xdg-config-home (System/getenv "XDG_CONFIG_HOME")
-         cfg-file (u/load-if-file (u/join-paths xdg-config-home "recap/config.edn"))]
+    let [user-home-dir (System/getProperty "user.home")
+         app-config-dir (case @u/os
+                          :linux (System/getenv "XDG_CONFIG_HOME")
+                          :windows (System/getenv "LOCALAPPDATA")
+                          :mac (u/join-paths user-home-dir "Library/Preferences")
+                          nil)
+         cfg-file (u/load-if-file (u/join-paths app-config-dir "recap/config.edn"))]
 
-    (and xdg-config-home (r/success? cfg-file))
+    (and app-config-dir (r/success? cfg-file))
     (read-config-file (:file cfg-file))
 
-    let [cfg-file (u/load-if-file (u/join-paths (System/getenv "HOME")
-                                                ".config/recap/config.edn"))]
+    let [cfg-file (u/load-if-file (u/join-paths user-home-dir ".config/recap/config.edn"))]
 
     (r/success? cfg-file)
     (read-config-file (:file cfg-file))
