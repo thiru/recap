@@ -127,7 +127,34 @@
                  (println (:message result)))
                (println (:message result)))))
 
+(defmacro while-success->
+  "Similar to `some->` except works on result maps. I.e. when first-r is successful, threads it
+  into the first form (via `->`), and when that result is successful, through the next etc.
+  Useful for short-circuiting on a failure result."
+  [first-r & forms]
+  (let [g (gensym)
+        steps (map (fn [step] `(if (failed? ~g) ~g (-> ~g ~step)))
+                   forms)]
+    `(let [~g ~first-r
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
+
+(defmacro while-success->>
+  "Similar to `some->>` except works on result maps. I.e. when first-r is successful, threads it
+  into the first form (via `->>`), and when that result is successful, through the next etc.
+  Useful for short-circuiting on a failure result."
+  {:added "1.5"}
+  [expr & forms]
+  (let [g (gensym)
+        steps (map (fn [step] `(if (failed? ~g) ~g (->> ~g ~step)))
+                   forms)]
+    `(let [~g ~expr
+           ~@(interleave (repeat g) (butlast steps))]
+       ~(if (empty? steps)
+          g
+          (last steps)))))
 
 (comment
   (prepend-msg (r :info "original") "prepended - "))
-

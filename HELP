@@ -28,8 +28,8 @@ restitch <FILE>
 text <FILE>
   Output text contents only (i.e. without timings, and other captions metadata)
 
-help, --help, -h
+--help, -h
   Show this help
 
-version, --version
+--version
   Show current version

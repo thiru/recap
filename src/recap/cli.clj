@@ -4,9 +4,8 @@
   (:require [clojure.pprint :as pprint]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [better-cond.core :as b]
             [puget.printer :as puget]
-            [utils.common :as c]
+            [utils.common :as u]
             [utils.specin :refer [defn]]
             [utils.results :as r]
             [recap.caption :as cap]
@@ -17,188 +16,166 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
-(def version (-> (slurp "VERSION")
-                 str/trim))
-(def help (-> (slurp "HELP")
-              (format version)))
-
-(def primary-commands #{:contiguous ::linger :overlap :parse :restitch :text})
-
-(s/def ::cmd-name keyword?)
-(s/def ::cmd-args (s/coll-of string?))
-(s/def ::cmd-parse-r (s/keys :req-un [:r/level :r/message
-                                      ::cmd-name ::cmd-args]))
+(def global-opt-cmds
+  "A set of arguments that take the form of global options (by convention) but behave like
+  sub-commands."
+  #{"-h" "--help" "--version"})
 
 
-(defn parse
-  "Parse the given CLI arguments."
+(def version (-> (slurp "VERSION") str/trim))
+(def help (-> (slurp "HELP") (format version)))
+
+
+(defn check-args
   {:args (s/cat :args (s/coll-of string?))
-   :ret ::cmd-parse-r}
-  [args]
-  (if (empty? args)
-    (r/r :error "No command specified. Try running: recap --help"
-         {:cmd-name :unspecified
-          :cmd-args []})
-
-    (let [cmd-name (first args)
-          cmd-kw (-> cmd-name str/lower-case keyword)]
-      (cond
-        (contains? #{:help :--help :-h} cmd-kw)
-        (r/r :success ""
-             {:cmd-name :help
-              :cmd-args []})
-
-        (contains? #{:version :--version} cmd-kw)
-        (r/r :success ""
-             {:cmd-name :version
-              :cmd-args []})
-
-        (contains? primary-commands cmd-kw)
-        (r/r :success ""
-             {:cmd-name cmd-kw
-              :cmd-args (rest args)})
-
-        :else
-        (r/r :error (c/fmt ["Unrecognised command/option: '%s'. Try running: "
-                            "recap --help"]
-                           (first args))
-             {:cmd-name cmd-kw
-              :cmd-args []})))))
-
-
-(defn run-cmd
-  "Action the specified CLI command."
-  {:args (s/cat :cmd-parse-r ::cmd-parse-r)
    :ret ::r/result}
-  [cmd-parse-r]
-  (when (r/failed? cmd-parse-r)
-    (c/exit! cmd-parse-r))
+  [args]
+  (if (or (empty? args)
+          (str/blank? (first args)))
+    (r/r :error "No sub-command specified. Try running: recap --help"
+         {:args args})
+    (r/r :success "Some arguments found"
+         {:args args})))
 
-  (case (:cmd-name cmd-parse-r)
-    :help
+(defn extract-global-opts
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (loop [rest-args args
+         curr-arg (first rest-args)
+         global-opts []]
+    (if (and curr-arg (str/starts-with? curr-arg "-"))
+      (recur (rest rest-args)
+             (first (rest rest-args))
+             (conj global-opts curr-arg))
+      (r/r :success (format "Extracted %d global option(s)" (count global-opts))
+           {:args rest-args
+            :global-opts global-opts}))))
+
+(defn extract-sub-cmd-and-args
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [global-opts args] :as _result}]
+  (if-let [sub-cmd  (u/find-first global-opt-cmds global-opts)]
+    (r/r :success (format "Extracted global option, '%s' as sub-command" sub-cmd)
+         {:global-opts global-opts
+          :sub-cmd sub-cmd
+          :args []})
+    (r/r :success (format "Extracted sub-command '%s'" (first args))
+         {:global-opts global-opts
+          :sub-cmd (first args)
+          :args (rest args)})))
+
+(defn parse-cli-args
+  "Parse the given CLI arguments."
+  [args]
+  {:args (s/cat :args (s/coll-of string?))
+   :ret ::r/result}
+  (r/while-success-> (check-args args)
+                     extract-global-opts
+                     extract-sub-cmd-and-args))
+
+(defn contiguous-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (r/while-success->> (u/slurp-file (first args))
+                      cap/strip-contiguous-speaker-tags
+                      (r/r :success)))
+
+(defn linger-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (let [linger-secs (u/parse-float (second args) :fallback linger/max-linger-secs-default)
+        apply-linger #(linger/linger-cues % :max-linger-secs linger-secs)]
+    (r/while-success->> (u/slurp-file (first args))
+                        cap/parse
+                        apply-linger
+                        cap/to-string
+                        (r/r :success))))
+
+(defn overlap-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (letfn [(indeces->result [indeces]
+            (if (empty? indeces)
+              (r/r :success "No overlapping cues found")
+              (r/r :success (format "Found %d overlapping cue(s) at the following positions:\n%s"
+                                    (count indeces)
+                                    (str/join ", " indeces)))))]
+    (r/while-success-> (u/slurp-file (first args))
+                       cap/parse
+                       :cues
+                       cap/find-overlapping-cues
+                       indeces->result)))
+
+(defn parse-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (let [no-colour? (-> args second (or "") str/trim str/lower-case (= "false"))
+        print-maybe-coloured #(do
+                                (if no-colour?
+                                  (pprint/pprint %)
+                                  (puget/cprint %))
+                                "")]
+    (r/while-success->> (u/slurp-file (first args))
+                        cap/parse
+                        print-maybe-coloured
+                        (r/r :success))))
+
+(defn restitch-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (r/while-success->> (u/slurp-file (first args))
+                      cap/strip-contiguous-speaker-tags
+                      cap/parse
+                      restitch/restitch
+                      cap/to-string
+                      (r/r :success)))
+
+(defn text-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (r/while-success->> (u/slurp-file (first args))
+                      cap/parse
+                      :cues
+                      cap/to-plain-text
+                      (r/r :success)))
+
+(defn run-sub-cmd
+  {:args (s/cat :result ::r/result)
+   :ret ::r/result}
+  [{:keys [sub-cmd] :as result}]
+  (case sub-cmd
+    ("-h" "--help")
     (r/r :success help)
 
-    :version
+    "--version"
     (r/r :success version)
 
-    :contiguous
-    (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
+    "contiguous"
+    (contiguous-sub-cmd result)
 
-      (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
+    "linger"
+    (linger-sub-cmd result)
 
-      :else
-      (r/r :success (cap/strip-contiguous-speaker-tags slurp-r)))
+    "overlap"
+    (overlap-sub-cmd result)
 
-    :overlap
-    (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
+    "parse"
+    (parse-sub-cmd result)
 
-      (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
+    "restitch"
+    (restitch-sub-cmd result)
 
-      let [cap-parse-r (cap/parse slurp-r)]
+    "text"
+    (text-sub-cmd result)
 
-      (r/failed? cap-parse-r)
-      cap-parse-r
-
-      :else
-      (let [indeces (cap/find-overlapping-cues (:cues cap-parse-r))]
-        (if (empty? indeces)
-          (r/r :success "No overlapping cues found")
-          (r/r :success (c/fmt ["Found %d overlapping cue(s) at the following "
-                                "positions:\n%s"]
-                               (count indeces)
-                               (str/join ", " indeces))))))
-
-    :parse
-    (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))
-           second-arg (-> cmd-parse-r :cmd-args second str str/trim str/lower-case)
-           no-colour? (and (not (str/blank? second-arg))
-                           (not= "false" second-arg))]
-
-      (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to read file failed: ")
-
-      let [cap-parse-r (cap/parse slurp-r)]
-
-      (r/failed? cap-parse-r)
-      cap-parse-r
-
-      :else
-      (do
-        (if no-colour?
-          (pprint/pprint cap-parse-r)
-          (puget/cprint cap-parse-r))
-        (r/r :success "")))
-
-    :linger
-    (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
-
-      (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
-
-      let [cap-parse-r (cap/parse slurp-r)]
-
-      (r/failed? cap-parse-r)
-      cap-parse-r
-
-      let [linger-secs (-> cmd-parse-r
-                           :cmd-args
-                           second
-                           (c/parse-float :fallback linger/max-linger-secs-default))]
-
-      :else
-      (r/r :success (-> cap-parse-r
-                        (linger/linger-cues :max-linger-secs linger-secs)
-                        cap/to-string)))
-
-
-    :restitch
-    (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
-
-      (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to read captions file failed: ")
-
-      let [cap-parse-r (-> slurp-r
-                           cap/strip-contiguous-speaker-tags
-                           cap/parse)]
-
-      (r/failed? cap-parse-r)
-      cap-parse-r
-
-      :else
-      (r/r :success (-> cap-parse-r restitch/restitch cap/to-string)))
-
-    :text
-    (b/cond
-      let [slurp-r (c/slurp-file (-> cmd-parse-r :cmd-args first))]
-
-      (r/failed? slurp-r)
-      (r/prepend-msg slurp-r "Attempt to read file failed: ")
-
-      let [cap-parse-r (cap/parse slurp-r)]
-
-      (r/failed? cap-parse-r)
-      cap-parse-r
-
-      :else
-      (do
-        (-> cap-parse-r :cues cap/to-plain-text println)
-        (r/r :success "")))
-
-    ;; case else
-    (r/r :error "Command unspecified")))
-
-
-(comment
-  (let [cap-parse-r (-> (c/slurp-file "tmp/one-word.srt")
-                        cap/strip-contiguous-speaker-tags
-                        cap/parse)]
-    (if (r/failed? cap-parse-r)
-      cap-parse-r
-      (r/r :success (-> cap-parse-r restitch/restitch #_cap/to-string)))))
+    (assoc result
+           :level :error
+           :message "Unrecognised sub-command. Try running: recap --help")))
