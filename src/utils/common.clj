@@ -108,6 +108,26 @@
     (apply format formatter args)))
 
 
+(defn deep-merge
+  "Recursively merges the given maps.
+
+  The `merge` function that comes with Clojure only does a shallow merge.
+  Nested maps are simply replaced rather than merged.
+
+  This implementation was taken from:
+  https://gist.github.com/danielpcox/c70a8aa2c36766200a95
+
+  Returns a map."
+  {:args (s/cat :maps (s/* map?))
+   :ret map?}
+  [& maps]
+  (apply merge-with (fn [& args]
+                      (if (every? map? args)
+                        (apply deep-merge args)
+                        (last args)))
+         maps))
+
+
 (defn join-paths
   "Join the given path segments.
 

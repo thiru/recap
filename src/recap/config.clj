@@ -35,7 +35,7 @@
   (->> file-obj
        u/slurp-file
        edn/read-string
-       (merge default-config)))
+       (u/deep-merge default-config)))
 
 (defn load-config
   "Load config.edn from one of these locations:
