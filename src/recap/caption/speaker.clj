@@ -34,7 +34,7 @@
   An example speaker tag: `Bob:`."
   [text]
   (->> text
-       (re-find #"^([A-Z][\w-]*)(\s+[\w-]*)?(:)")
+       (re-find #"^([A-Z][\w-]*)(\s+[\w-]*)?(:+)")
        first))
 
 (defn get-speaker-tag-webvtt
@@ -63,6 +63,7 @@
 
 (comment
   (get-speaker-tag "Q1: hello")
+  (get-speaker-tag "Q1:: hello")
   (get-speaker-tag "Al: hello")
   (get-speaker-tag "Al-Bob: hello")
   (get-speaker-tag "Al Bob: hello")
@@ -70,4 +71,3 @@
   (get-speaker-tag "Al bob cate: hello")
   (get-speaker-tag "<v Al bob cate:> hello")
   (get-speaker-tag "Hi, Al: hello"))
-
