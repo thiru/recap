@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [recap.caption.data-specs :as dspecs]
-            [utils.common :as c]
+            [utils.common :as u]
             [utils.specin :refer [defn]]))
 
 

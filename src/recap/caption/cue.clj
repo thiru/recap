@@ -5,7 +5,7 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [recap.caption.data-specs :as dspecs]
-            [utils.common :as c]
+            [utils.common :as u]
             [utils.specin :refer [defn]]
             [utils.results :as r]))
 
@@ -67,13 +67,13 @@
     (empty? cue)
     0
 
-    let [start-dur-r (-> cue :start (str/replace #"," ".") c/duration->secs)]
+    let [start-dur-r (-> cue :start (str/replace #"," ".") u/duration->secs)]
 
     (r/failed? start-dur-r)
     (r/prepend-msg start-dur-r (format "Start time of cue (%s) is invalid. "
                                        (:start cue)))
 
-    let [end-dur-r (-> cue :end (str/replace #"," ".") c/duration->secs)]
+    let [end-dur-r (-> cue :end (str/replace #"," ".") u/duration->secs)]
 
     (r/failed? end-dur-r)
     (r/prepend-msg end-dur-r (format "End time of cue (%s) is invalid. "
@@ -90,14 +90,14 @@
               :error-result ::r/result)}
   [cue1 cue2]
   (b/cond
-    let [cue1-end-secs (c/duration->secs (:end cue1))]
+    let [cue1-end-secs (u/duration->secs (:end cue1))]
 
     (r/failed? cue1-end-secs)
     (r/prepend-msg cue1-end-secs
                    (format "First cue has an invalid end duration: %s. "
                            (:end cue1)))
 
-    let [cue2-start-secs (c/duration->secs (:start cue2))]
+    let [cue2-start-secs (u/duration->secs (:start cue2))]
 
     (r/failed? cue2-start-secs)
     (r/prepend-msg cue2-start-secs

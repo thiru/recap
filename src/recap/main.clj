@@ -2,7 +2,7 @@
   "Entry-point into the application."
   (:refer-clojure :exclude [defn])
   (:require [recap.cli :as cli]
-            [utils.common :as c]
+            [utils.common :as u]
             [utils.specin :refer [defn]])
   (:gen-class))
 
@@ -19,4 +19,4 @@
   (-> (or args [])
       cli/parse-cli-args
       cli/run-sub-cmd
-      c/exit!))
+      u/exit!))
