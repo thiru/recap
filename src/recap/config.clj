@@ -13,6 +13,14 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
+(declare load-config)
+
+
+(def active-cfg
+  (delay (-> (load-config)
+             (update :ends-with-any-punctuation re-pattern)
+             (update :ends-with-clause-ending-punctuation re-pattern))))
+
 (def default-config
   "Default config (intentionally loaded at compile-time)."
   (-> "default-config.edn"

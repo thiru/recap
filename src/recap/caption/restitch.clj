@@ -22,12 +22,6 @@
 (s/def ::max-lines-per-cue int?)
 
 
-(def default-opts
-  (delay (-> (cfg/load-config)
-             (update :ends-with-any-punctuation re-pattern)
-             (update :ends-with-clause-ending-punctuation re-pattern))))
-
-
 (defn restitch
   "Join cues in the given captions for better readability, based on
   punctuation, quiet gaps, etc."
@@ -35,7 +29,7 @@
                 :kwargs (s/keys* :opt-un []))
    :ret ::dspecs/caption}
   [caption & {:keys [opts]
-              :or {opts @default-opts}}]
+              :or {opts @cfg/active-cfg}}]
   (b/cond
     (empty? (:cues caption))
     caption
@@ -66,14 +60,14 @@
   {:args (s/cat :text string?)
    :ret boolean?}
   [text]
-  (boolean (re-find (:ends-with-clause-ending-punctuation @default-opts) text)))
+  (boolean (re-find (:ends-with-clause-ending-punctuation @cfg/active-cfg) text)))
 
 
 (defn punctuation-ender?
   {:args (s/cat :text string?)
    :ret boolean?}
   [text]
-  (boolean (re-find (:ends-with-any-punctuation @default-opts) text)))
+  (boolean (re-find (:ends-with-any-punctuation @cfg/active-cfg) text)))
 
 
 (defn has-long-gap?
@@ -87,7 +81,7 @@
    :ret boolean?}
   [cue1 cue2 & {:keys [force-new-cue-tolerance-secs]
                 :or {force-new-cue-tolerance-secs
-                     (:force-new-cue-tolerance-secs @default-opts)}}]
+                     (:force-new-cue-tolerance-secs @cfg/active-cfg)}}]
   (let [cue-gap-secs (cue/gap-inbetween cue1 cue2)]
     (if (r/failed? cue-gap-secs)
       (do (r/print-msg cue-gap-secs)
@@ -169,7 +163,7 @@
         cue-text-length (count cue-text)
         last-char (nth cue-text (dec cue-text-length))
         second-last-char (nth cue-text (- cue-text-length 2) nil)]
-    (and (>= cue-text-length (:breakable-clause-ender-min-chars @default-opts))
+    (and (>= cue-text-length (:breakable-clause-ender-min-chars @cfg/active-cfg))
          (or (= last-char \.) (= last-char \?) (= last-char \!))
          (not (= second-last-char \.)))))
 
@@ -181,7 +175,7 @@
                 :kwargs (s/keys* :opt-un [::max-lines-per-cue]))
    :ret ::dspecs/caption}
   [caption & {:keys [max-lines-per-cue]
-              :or {max-lines-per-cue (:max-lines-per-cue @default-opts)}}]
+              :or {max-lines-per-cue (:max-lines-per-cue @cfg/active-cfg)}}]
   (b/cond
     (empty? (:cues caption))
     caption
