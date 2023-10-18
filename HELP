@@ -28,6 +28,11 @@ restitch <FILE>
 text <FILE>
   Output text contents only (i.e. without timings, and other captions metadata)
 
+trint-dl <srt|vtt> <ID>
+  Download captions for the specified document
+  ID
+    The id of the document in Trint (typically the last component of the URL)
+
 --help, -h
   Show this help
 

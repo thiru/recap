@@ -19,6 +19,7 @@
     [recap.cli :as cli]
     [recap.config :as cfg]
     [recap.main :as main]
+    [recap.trint :as trint]
     [utils.common :as u]
     [utils.nrepl :as nrepl]
     [utils.printing :as printing :refer [PP]]

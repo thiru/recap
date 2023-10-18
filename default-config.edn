@@ -6,4 +6,15 @@
  :ends-with-clause-ending-punctuation "[.!?;:\\]'\"—–-]['\"]?$"
  :force-new-cue-tolerance-secs 3
  :ideal-max-chars-per-line 38
- :max-lines-per-cue 2}
+ :max-lines-per-cue 2
+ :trint
+ {:api-key ""
+  :opts {:captions-by-paragraph false
+         :max-subtitle-character-length 1
+         :highlights-only false
+         :enable-speakers true
+         :speaker-on-new-line true
+         :speaker-uppercase false
+         :skip-strikethroughs false}
+  :srt-url "https://api.trint.com/export/srt/"
+  :webvtt-url "https://api.trint.com/export/webvtt/"}}

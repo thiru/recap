@@ -10,7 +10,8 @@
             [utils.results :as r]
             [recap.caption :as cap]
             [recap.caption.linger :as linger]
-            [recap.caption.restitch :as restitch]))
+            [recap.caption.restitch :as restitch]
+            [recap.trint :as trint]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm
@@ -147,6 +148,14 @@
                       cap/to-plain-text
                       (r/r :success)))
 
+(defn trint-dl-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (r/while-success->> (trint/get-document-captions (-> args first keyword)
+                                                   (second args))
+                      (r/r :success)))
+
 (defn run-sub-cmd
   {:args (s/cat :result ::r/result)
    :ret ::r/result}
@@ -175,6 +184,9 @@
 
     "text"
     (text-sub-cmd result)
+
+    "trint-dl"
+    (trint-dl-sub-cmd result)
 
     (assoc result
            :level :error
