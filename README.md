@@ -72,6 +72,16 @@ $ recap parse input.vtt > output.edn
 
 -----
 
+Download captions from Trint. For this you need to have a valid Trint API key specified in _config.edn_.
+
+```shell
+$ recap trint-dl srt "abc123"
+```
+
+Where "abc123" is the id of the respective document in Trint.
+
+-----
+
 Show help
 
 ```shell
