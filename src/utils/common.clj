@@ -43,8 +43,11 @@
 (defn java-class-name=>clj-fn-name [fn]
   (let [kebabified (str/replace (str fn) "_" "-")
         seg1 (str/split kebabified #"\$")
-        seg2 (str/split (second seg1) #"\@")]
-    (str (first seg1) \/ (first seg2))))
+        seg2 (str/split (or (second seg1) "") #"\@")]
+    (str (first seg1)
+         (if (empty? (first seg2))
+           ""
+           (str \/ (first seg2))))))
 
 (defn as-clj-stack-info
   [^java.lang.StackTraceElement ste]
