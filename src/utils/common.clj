@@ -120,12 +120,14 @@
   {:args (s/cat :file ::file)
    :ret (s/and ::r/result (s/keys :opt-un [::file]))}
   [file]
-  (let [^java.io.File file-obj (io/as-file file)]
-    (if (and file-obj
-             (.exists ^java.io.File file-obj)) ; type hint needed for GraalVM image
-      (r/r :success "File successfully loaded" {:file file-obj})
-      (r/r :error (format "File '%s' was not found or is inaccessible"
-                          (or file ""))))))
+  (if (nil? file)
+    (r/r :error "No file specified")
+    (let [^java.io.File file-obj (io/as-file file)]
+      (if (and file-obj
+               (.exists ^java.io.File file-obj)) ; type hint needed for GraalVM image
+        (r/r :success "File successfully loaded" {:file file-obj})
+        (r/r :error (format "File '%s' was not found or is inaccessible"
+                            (or file "")))))))
 
 
 (defn slurp-file
