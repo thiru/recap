@@ -82,6 +82,14 @@ Where "abc123" is the id of the respective document in Trint.
 
 -----
 
+Recap can read from stdin making it easy to pipe commands together like so:
+
+```shell
+$ recap trint-dl srt "document id" | recap restitch | recap linger
+```
+
+-----
+
 Show help
 
 ```shell

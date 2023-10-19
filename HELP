@@ -38,3 +38,8 @@ trint-dl <srt|vtt> <ID>
 
 --version
   Show current version
+
+EXAMPLES
+
+Recap can read from stdin making it easy to pipe commands together like so:
+  recap trint-dl srt "document id" | recap restitch | recap linger

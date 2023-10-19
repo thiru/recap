@@ -76,11 +76,24 @@
                      extract-global-opts
                      extract-sub-cmd-and-args))
 
+(defn read-stdin
+  "Attempt to read from stdin if there's anything there."
+  {:ret (s/or :content string?
+              :no-content nil?)}
+  []
+  ;; (r/print-msg (r/r :error "Reading from stdin...")) ; DEBUG
+  (if (.ready ^clojure.lang.LineNumberingPushbackReader *in*)
+    (loop [input (read-line)
+           acc []]
+      (if input
+        (recur (read-line) (conj acc input))
+        (str/join "\n" acc)))))
+
 (defn contiguous-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
   [{:keys [args] :as _result}]
-  (r/while-success->> (u/slurp-file (first args))
+  (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       (r/r :success)))
 
@@ -90,7 +103,7 @@
   [{:keys [args] :as _result}]
   (let [linger-secs (u/parse-float (second args) :fallback linger/max-linger-secs-default)
         apply-linger #(linger/linger-cues % :max-linger-secs linger-secs)]
-    (r/while-success->> (u/slurp-file (first args))
+    (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
                         cap/parse
                         apply-linger
                         cap/to-string
@@ -106,7 +119,7 @@
               (r/r :success (format "Found %d overlapping cue(s) at the following positions:\n%s"
                                     (count indeces)
                                     (str/join ", " indeces)))))]
-    (r/while-success-> (u/slurp-file (first args))
+    (r/while-success-> (or (read-stdin) (u/slurp-file (first args)))
                        cap/parse
                        :cues
                        cap/find-overlapping-cues
@@ -122,7 +135,7 @@
                                   (pprint/pprint %)
                                   (puget/cprint %))
                                 "")]
-    (r/while-success->> (u/slurp-file (first args))
+    (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
                         cap/parse
                         print-maybe-coloured
                         (r/r :success))))
@@ -131,7 +144,7 @@
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
   [{:keys [args] :as _result}]
-  (r/while-success->> (u/slurp-file (first args))
+  (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       cap/parse
                       restitch/restitch
@@ -142,7 +155,7 @@
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
   [{:keys [args] :as _result}]
-  (r/while-success->> (u/slurp-file (first args))
+  (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
                       cap/parse
                       :cues
                       cap/to-plain-text
@@ -152,9 +165,10 @@
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
   [{:keys [args] :as _result}]
-  (r/while-success->> (trint/get-document-captions (-> args first keyword)
-                                                   (second args))
-                      (r/r :success)))
+  (let [captions-format (-> args first keyword)
+        id (or (read-stdin) (second args))]
+    (r/while-success->> (trint/get-document-captions captions-format id)
+                        (r/r :success))))
 
 (defn run-sub-cmd
   {:args (s/cat :result ::r/result)
