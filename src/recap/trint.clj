@@ -11,8 +11,7 @@
             [utils.results :as r]))
 
 
-(declare _
-         api-key
+(declare api-key
          base-url
          safe-parse-json
          api-opts
