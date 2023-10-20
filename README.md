@@ -51,7 +51,7 @@ $ recap contiguous input.vtt > output.vtt
 Look for overlapping captions in _input.vtt_ and report them. The need for this came out of a bug in Otter that would create overlapping captions due to an inconsitency between the text and audio during the STT process.
 
 ```shell
-$ recap text input.vtt > output.txt
+$ recap overlap input.vtt > output.txt
 ```
 
 -----
