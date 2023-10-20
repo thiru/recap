@@ -11,6 +11,7 @@
             [recap.caption :as cap]
             [recap.caption.linger :as linger]
             [recap.caption.restitch :as restitch]
+            [recap.fixup :as fixup]
             [recap.trint :as trint]))
 
 
@@ -96,6 +97,23 @@
   (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       (r/r :success)))
+
+(defn fixup-sub-cmd
+  {:args (s/cat :_result ::r/result)
+   :ret ::r/result}
+  [{:keys [args] :as _result}]
+  (letfn [(clean-cue-lines [caption]
+            (update caption
+                    :cues
+                    (fn [cues]
+                      (mapv (fn [cue]
+                              (update cue :lines #(mapv fixup/fixup %)))
+                            cues))))]
+    (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+                        cap/parse
+                        clean-cue-lines
+                        cap/to-string
+                        (r/r :success))))
 
 (defn linger-sub-cmd
   {:args (s/cat :_result ::r/result)
@@ -183,6 +201,9 @@
 
     "contiguous"
     (contiguous-sub-cmd result)
+
+    "fixup"
+    (fixup-sub-cmd result)
 
     "linger"
     (linger-sub-cmd result)

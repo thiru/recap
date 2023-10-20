@@ -56,6 +56,15 @@ $ recap overlap input.vtt > output.txt
 
 -----
 
+Fixup some common mistakes and follow certain captioning conventions. Many of these are subject.
+See [fixup.clj](./src/recap/fixup.clj) the set of regular expressions that apply the changes.
+
+```shell
+$ recap fixup input.vtt > output.txt
+```
+
+-----
+
 Extract just the text (minus timing metadata, etc.) from _input.vtt_ and save to _output.txt_.
 
 ```shell
@@ -85,7 +94,7 @@ Where "abc123" is the id of the respective document in Trint.
 Recap can read from stdin making it easy to pipe commands together like so:
 
 ```shell
-$ recap trint-dl srt "document id" | recap restitch | recap linger
+$ recap trint-dl srt "document id" | recap restitch | recap linger | recap fixup
 ```
 
 -----
