@@ -12,7 +12,7 @@ We realised that much of the editing done in Amara could be accomplished program
 
 ## Usage
 
-There are several ways to use recap.
+There are several ways to use recap. You only need to choose one of the three options below (listed from easiest, to most involved):
 
 1) Download the stand-alone executable in [Releases](https://github.com/thiru/recap/releases) (if your OS/platform is supported).
 2) Install [Babashka](https://github.com/babashka/babashka), clone this repo and run `bin/bb`. This will run recap from source but is just about as fast as the stand-alone binary.
