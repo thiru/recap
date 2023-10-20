@@ -36,6 +36,10 @@ trint-dl <srt|vtt> <ID>
   ID
     The id of the document in Trint (typically the last component of the URL)
 
+-i
+  Read from stdin as the primary input to the respective sub-command
+  This is typically the <FILE> argument. For trint-dl it is the <ID> argument.
+
 --help, -h
   Show this help
 
@@ -44,5 +48,6 @@ trint-dl <srt|vtt> <ID>
 
 EXAMPLES
 
-Recap can read from stdin making it easy to pipe commands together like so:
-  recap trint-dl srt "document id" | recap restitch | recap linger | recap fixup
+Recap can read from stdin when the -i flag is given
+This makes it easy to pipe commands together like so:
+  recap trint-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup

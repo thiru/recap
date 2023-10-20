@@ -77,31 +77,18 @@
                      extract-global-opts
                      extract-sub-cmd-and-args))
 
-(defn read-stdin
-  "Attempt to read from stdin if there's anything there."
-  {:ret (s/or :content string?
-              :no-content nil?)}
-  []
-  ;; (r/print-msg (r/r :error "Reading from stdin...")) ; DEBUG
-  (if (.ready ^clojure.lang.LineNumberingPushbackReader *in*)
-    (loop [input (read-line)
-           acc []]
-      (if input
-        (recur (read-line) (conj acc input))
-        (str/join "\n" acc)))))
-
 (defn contiguous-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
-  (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+  [{:keys [args stdin] :as _result}]
+  (r/while-success->> (or stdin (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       (r/r :success)))
 
 (defn fixup-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
+  [{:keys [args stdin] :as _result}]
   (letfn [(clean-cue-lines [caption]
             (update caption
                     :cues
@@ -109,7 +96,7 @@
                       (mapv (fn [cue]
                               (update cue :lines #(mapv fixup/fixup %)))
                             cues))))]
-    (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+    (r/while-success->> (or stdin (u/slurp-file (first args)))
                         cap/parse
                         clean-cue-lines
                         cap/to-string
@@ -118,10 +105,10 @@
 (defn linger-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
+  [{:keys [args stdin] :as _result}]
   (let [linger-secs (u/parse-float (second args) :fallback linger/max-linger-secs-default)
         apply-linger #(linger/linger-cues % :max-linger-secs linger-secs)]
-    (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+    (r/while-success->> (or stdin (u/slurp-file (first args)))
                         cap/parse
                         apply-linger
                         cap/to-string
@@ -130,14 +117,14 @@
 (defn overlap-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
+  [{:keys [args stdin] :as _result}]
   (letfn [(indeces->result [indeces]
             (if (empty? indeces)
               (r/r :success "No overlapping cues found")
               (r/r :success (format "Found %d overlapping cue(s) at the following positions:\n%s"
                                     (count indeces)
                                     (str/join ", " indeces)))))]
-    (r/while-success-> (or (read-stdin) (u/slurp-file (first args)))
+    (r/while-success-> (or stdin (u/slurp-file (first args)))
                        cap/parse
                        :cues
                        cap/find-overlapping-cues
@@ -146,14 +133,14 @@
 (defn parse-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
+  [{:keys [args stdin] :as _result}]
   (let [no-colour? (-> args second (or "") str/trim str/lower-case (= "false"))
         print-maybe-coloured #(do
                                 (if no-colour?
                                   (pprint/pprint %)
                                   (puget/cprint %))
                                 "")]
-    (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+    (r/while-success->> (or stdin (u/slurp-file (first args)))
                         cap/parse
                         print-maybe-coloured
                         (r/r :success))))
@@ -161,8 +148,8 @@
 (defn restitch-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
-  (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+  [{:keys [args stdin] :as _result}]
+  (r/while-success->> (or stdin (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       cap/parse
                       restitch/restitch
@@ -172,8 +159,8 @@
 (defn text-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
-  (r/while-success->> (or (read-stdin) (u/slurp-file (first args)))
+  [{:keys [args stdin] :as _result}]
+  (r/while-success->> (or stdin (u/slurp-file (first args)))
                       cap/parse
                       :cues
                       cap/to-plain-text
@@ -182,47 +169,62 @@
 (defn trint-dl-sub-cmd
   {:args (s/cat :_result ::r/result)
    :ret ::r/result}
-  [{:keys [args] :as _result}]
+  [{:keys [args stdin] :as _result}]
   (let [captions-format (-> args first keyword)
-        id (or (read-stdin) (second args))]
+        id (or stdin (second args))]
     (r/while-success->> (trint/get-document-captions captions-format id)
                         (r/r :success))))
+
+(defn read-stdin
+  "Read text from stdin."
+  {:ret (s/or :content string?
+              :no-content nil?)}
+  []
+  ;; (r/print-msg (r/r :error "Reading from stdin...")) ; DEBUG
+  (loop [input (read-line)
+         acc []]
+    (if input
+      (recur (read-line) (conj acc input))
+      (str/join "\n" acc))))
 
 (defn run-sub-cmd
   {:args (s/cat :result ::r/result)
    :ret ::r/result}
-  [{:keys [sub-cmd] :as result}]
-  (case sub-cmd
-    ("-h" "--help")
-    (r/r :success help)
+  [{:keys [global-opts sub-cmd] :as result}]
+  (let [stdin-text (if (= "-i" (first global-opts))
+                     (read-stdin))
+        result (assoc result :stdin stdin-text)]
+    (case sub-cmd
+      ("-h" "--help")
+      (r/r :success help)
 
-    "--version"
-    (r/r :success version)
+      "--version"
+      (r/r :success version)
 
-    "contiguous"
-    (contiguous-sub-cmd result)
+      "contiguous"
+      (contiguous-sub-cmd result)
 
-    "fixup"
-    (fixup-sub-cmd result)
+      "fixup"
+      (fixup-sub-cmd result)
 
-    "linger"
-    (linger-sub-cmd result)
+      "linger"
+      (linger-sub-cmd result)
 
-    "overlap"
-    (overlap-sub-cmd result)
+      "overlap"
+      (overlap-sub-cmd result)
 
-    "parse"
-    (parse-sub-cmd result)
+      "parse"
+      (parse-sub-cmd result)
 
-    "restitch"
-    (restitch-sub-cmd result)
+      "restitch"
+      (restitch-sub-cmd result)
 
-    "text"
-    (text-sub-cmd result)
+      "text"
+      (text-sub-cmd result)
 
-    "trint-dl"
-    (trint-dl-sub-cmd result)
+      "trint-dl"
+      (trint-dl-sub-cmd result)
 
-    (assoc result
-           :level :error
-           :message "Unrecognised sub-command. Try running: recap --help")))
+      (assoc result
+             :level :error
+             :message "Unrecognised sub-command. Try running: recap --help"))))
