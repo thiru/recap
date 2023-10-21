@@ -81,6 +81,18 @@
      evaled#))
 
 
+(defn read-stdin
+  "Read text from stdin."
+  {:ret (s/nilable string?)}
+  []
+  ;; (r/print-msg (r/r :error "Reading from stdin...")) ; DEBUG
+  (loop [input (read-line)
+         acc []]
+    (if input
+      (recur (read-line) (conj acc input))
+      (str/join "\n" acc))))
+
+
 (defn exit!
   "Exit app with a success/failure exit code based on the given result.
   The result's message is also printed to stdout or stderr as appropriate."

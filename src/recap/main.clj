@@ -17,6 +17,5 @@
   {:ret nat-int?}
   [& args]
   (-> (or args [])
-      cli/parse-cli-args
-      cli/run-sub-cmd
+      cli/execute
       u/exit!))

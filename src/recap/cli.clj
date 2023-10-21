@@ -184,56 +184,64 @@
     (r/while-success->> (trint/get-document-captions captions-format id)
                         (r/r :success))))
 
-(defn read-stdin
-  "Read text from stdin."
-  {:ret (s/or :content string?
-              :no-content nil?)}
-  []
-  ;; (r/print-msg (r/r :error "Reading from stdin...")) ; DEBUG
-  (loop [input (read-line)
-         acc []]
-    (if input
-      (recur (read-line) (conj acc input))
-      (str/join "\n" acc))))
+(defn read-stdin-maybe
+  "Read text from stdin if requested by user."
+  {:args (s/cat :cli-r ::cli-r)
+   :ret (s/nilable string?)}
+  [{:keys [global-opts] :as cli-r}]
+  (let [stdin (when (= "-i" (first global-opts))
+                (u/read-stdin))]
+    (assoc cli-r :stdin stdin)))
 
 (defn run-sub-cmd
   {:args (s/cat :cli-r ::cli-r)
    :ret ::cli-r}
-  [{:keys [global-opts sub-cmd] :as cli-r}]
-  (let [stdin-text (if (= "-i" (first global-opts))
-                     (read-stdin))
-        cli-r (assoc cli-r :stdin stdin-text)]
-    (case sub-cmd
-      ("-h" "--help")
-      (r/r :success help)
+  [{:keys [sub-cmd] :as cli-r}]
+  (case sub-cmd
+    ("-h" "--help")
+    (r/r :success help)
 
-      "--version"
-      (r/r :success version)
+    "--version"
+    (r/r :success version)
 
-      "contiguous"
-      (contiguous-sub-cmd cli-r)
+    "contiguous"
+    (contiguous-sub-cmd cli-r)
 
-      "fixup"
-      (fixup-sub-cmd cli-r)
+    "fixup"
+    (fixup-sub-cmd cli-r)
 
-      "linger"
-      (linger-sub-cmd cli-r)
+    "linger"
+    (linger-sub-cmd cli-r)
 
-      "overlap"
-      (overlap-sub-cmd cli-r)
+    "overlap"
+    (overlap-sub-cmd cli-r)
 
-      "parse"
-      (parse-sub-cmd cli-r)
+    "parse"
+    (parse-sub-cmd cli-r)
 
-      "restitch"
-      (restitch-sub-cmd cli-r)
+    "restitch"
+    (restitch-sub-cmd cli-r)
 
-      "text"
-      (text-sub-cmd cli-r)
+    "text"
+    (text-sub-cmd cli-r)
 
-      "trint-dl"
-      (trint-dl-sub-cmd cli-r)
+    "trint-dl"
+    (trint-dl-sub-cmd cli-r)
 
-      (assoc cli-r
-             :level :error
-             :message "Unrecognised sub-command. Try running: recap --help"))))
+    (assoc cli-r
+           :level :error
+           :message "Unrecognised sub-command. Try running: recap --help")))
+
+(defn execute
+  "Execute the command specified by the given arguments."
+  {:args (s/cat :args ::cli-args)
+   :ret ::cli-r}
+  [args]
+  (-> (parse-cli-args args)
+      read-stdin-maybe
+      run-sub-cmd))
+
+
+(comment
+  (execute ["--version"])
+  (execute ["text" "tmp/short.vtt"]))
