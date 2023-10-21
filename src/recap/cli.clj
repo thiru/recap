@@ -18,6 +18,15 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
+(s/def ::cli-args (s/coll-of string?))
+(s/def ::global-opt #(str/starts-with? % "-"))
+(s/def ::global-opts (s/coll-of ::global-opt))
+(s/def ::sub-cmd (s/nilable string?))
+(s/def ::stdin (s/nilable string?))
+(s/def ::cli-r (s/and ::r/result
+                      (s/keys :opt-un [::cli-args ::global-opts ::sub-cmd ::stdin])))
+
+
 (def global-opt-cmds
   "A set of arguments that take the form of global options (by convention) but behave like
   sub-commands."
@@ -29,8 +38,8 @@
 
 
 (defn check-args
-  {:args (s/cat :args (s/coll-of string?))
-   :ret ::r/result}
+  {:args (s/cat :args ::cli-args)
+   :ret ::cli-r}
   [args]
   (if (or (empty? args)
           (str/blank? (first args)))
@@ -40,9 +49,9 @@
          {:args args})))
 
 (defn extract-global-opts
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args] :as _cli-r}]
   (loop [rest-args args
          curr-arg (first rest-args)
          global-opts []]
@@ -55,9 +64,9 @@
             :global-opts global-opts}))))
 
 (defn extract-sub-cmd-and-args
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [global-opts args] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [global-opts args] :as _cli-r}]
   (if-let [sub-cmd  (u/find-first global-opt-cmds global-opts)]
     (r/r :success (format "Extracted global option, '%s' as sub-command" sub-cmd)
          {:global-opts global-opts
@@ -71,24 +80,24 @@
 (defn parse-cli-args
   "Parse the given CLI arguments."
   [args]
-  {:args (s/cat :args (s/coll-of string?))
-   :ret ::r/result}
+  {:args (s/cat :args ::cli-args)
+   :ret ::cli-r}
   (r/while-success-> (check-args args)
                      extract-global-opts
                      extract-sub-cmd-and-args))
 
 (defn contiguous-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (r/while-success->> (or stdin (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       (r/r :success)))
 
 (defn fixup-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (letfn [(clean-cue-lines [caption]
             (update caption
                     :cues
@@ -103,9 +112,9 @@
                         (r/r :success))))
 
 (defn linger-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (let [linger-secs (u/parse-float (second args) :fallback linger/max-linger-secs-default)
         apply-linger #(linger/linger-cues % :max-linger-secs linger-secs)]
     (r/while-success->> (or stdin (u/slurp-file (first args)))
@@ -115,9 +124,9 @@
                         (r/r :success))))
 
 (defn overlap-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (letfn [(indeces->result [indeces]
             (if (empty? indeces)
               (r/r :success "No overlapping cues found")
@@ -131,9 +140,9 @@
                        indeces->result)))
 
 (defn parse-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (let [no-colour? (-> args second (or "") str/trim str/lower-case (= "false"))
         print-maybe-coloured #(do
                                 (if no-colour?
@@ -146,9 +155,9 @@
                         (r/r :success))))
 
 (defn restitch-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (r/while-success->> (or stdin (u/slurp-file (first args)))
                       cap/strip-contiguous-speaker-tags
                       cap/parse
@@ -157,9 +166,9 @@
                       (r/r :success)))
 
 (defn text-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (r/while-success->> (or stdin (u/slurp-file (first args)))
                       cap/parse
                       :cues
@@ -167,9 +176,9 @@
                       (r/r :success)))
 
 (defn trint-dl-sub-cmd
-  {:args (s/cat :_result ::r/result)
-   :ret ::r/result}
-  [{:keys [args stdin] :as _result}]
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
   (let [captions-format (-> args first keyword)
         id (or stdin (second args))]
     (r/while-success->> (trint/get-document-captions captions-format id)
@@ -188,12 +197,12 @@
       (str/join "\n" acc))))
 
 (defn run-sub-cmd
-  {:args (s/cat :result ::r/result)
-   :ret ::r/result}
-  [{:keys [global-opts sub-cmd] :as result}]
+  {:args (s/cat :cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [global-opts sub-cmd] :as cli-r}]
   (let [stdin-text (if (= "-i" (first global-opts))
                      (read-stdin))
-        result (assoc result :stdin stdin-text)]
+        cli-r (assoc cli-r :stdin stdin-text)]
     (case sub-cmd
       ("-h" "--help")
       (r/r :success help)
@@ -202,29 +211,29 @@
       (r/r :success version)
 
       "contiguous"
-      (contiguous-sub-cmd result)
+      (contiguous-sub-cmd cli-r)
 
       "fixup"
-      (fixup-sub-cmd result)
+      (fixup-sub-cmd cli-r)
 
       "linger"
-      (linger-sub-cmd result)
+      (linger-sub-cmd cli-r)
 
       "overlap"
-      (overlap-sub-cmd result)
+      (overlap-sub-cmd cli-r)
 
       "parse"
-      (parse-sub-cmd result)
+      (parse-sub-cmd cli-r)
 
       "restitch"
-      (restitch-sub-cmd result)
+      (restitch-sub-cmd cli-r)
 
       "text"
-      (text-sub-cmd result)
+      (text-sub-cmd cli-r)
 
       "trint-dl"
-      (trint-dl-sub-cmd result)
+      (trint-dl-sub-cmd cli-r)
 
-      (assoc result
+      (assoc cli-r
              :level :error
              :message "Unrecognised sub-command. Try running: recap --help"))))
