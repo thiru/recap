@@ -4,10 +4,9 @@
   (:require [clojure.spec.alpha :as s]
             [utils.specin :refer [defn]]))
 
+
 (set! *warn-on-reflection* true) ; for graalvm
 
-;; ## Level
-;; ----------------------------------------------------------------------------
 
 (def levels
   "A generic map of levels that can be used for logging, reporting, etc.
@@ -24,16 +23,14 @@
 
 (s/def ::level #(contains? levels %))
 
-;; ## Result
-;; ----------------------------------------------------------------------------
 
 (defn result?
   "Determine whether the given object is a valid result."
   [obj]
   (s/valid? ::result obj))
 
-;; NOTE: Allow a message to be any type, since we can usually get a meaningful
-;; string representation of most objects.
+;; NOTE: Allow a message to be any type, since we can usually get a meaningful string
+;; representation of most objects.
 (s/def ::message any?)
 (s/def ::result (s/keys :req-un [::level ::message]))
 
@@ -41,11 +38,10 @@
 (defn r
   "Creates a map representing the result of some operation.
 
-  I deliberately chose to use a very short function name because it will be
-  used heavily throughout the codebase. Perhaps in limited cases the length of
-  the name of a thing should be inversely proportional to its frequency of use?
-  The other potential short name that might work is 'res', but it seems
-  ambiguous in some environments (e.g. response for the web).
+  I deliberately chose to use a very short function name because it will be used heavily throughout
+  the codebase. Perhaps in limited cases the length of the name of a thing should be inversely
+  proportional to its frequency of use? The other potential short name that might work is 'res',
+  but it seems ambiguous in some environments (e.g. response for the web).
 
   * `level`
     * A value specifying the success/failure level
@@ -74,8 +70,8 @@
   * `nil`
   * `false`
   * An instance of `Throwable`
-  * A result map where the value of `:level` is a keyword defined in
-  `glu.results/levels` which maps to a negative number"
+  * A result map where the value of `:level` is a keyword defined in `levels` which maps to a
+  negative number"
   class)
 
 (defmethod success? nil nil-type [_]
@@ -105,8 +101,8 @@
 (defn warned?
   "Determine whether the given object represents a warning or failure outcome.
 
-  This is basically the same as `failed?` except also returns true if `obj`
-  is a result map where `:level` is `:warn`."
+  This is basically the same as `failed?` except also returns true if `obj` is a result map where
+  `:level` is `:warn`."
   [obj]
   (or (failed? obj)
       (= :warn (:level obj))))
@@ -116,8 +112,8 @@
   (assoc result :message (str msg (:message result))))
 
 (defn print-msg
-  "Prints the message of the given result to stdout or stderr accordingly.
-  No printing is done if the message is empty."
+  "Prints the message of the given result to stdout or stderr accordingly. No printing is done if
+  the message is empty."
   {:args (s/cat :result ::result)
    :ret nil?}
   [result] (when (not (empty? (or (:message result) "")))

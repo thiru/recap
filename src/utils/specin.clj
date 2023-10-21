@@ -65,4 +65,3 @@
          ~@(when-let [s args-spec] [:args s])
          ~@(when-let [s ret-spec] [:ret s])
          ~@(when-let [s fn-spec] [:fn s])))))
-

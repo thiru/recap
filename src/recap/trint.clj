@@ -163,4 +163,5 @@
          {:res-body body
           :res-status (:status response)})
 
+    :else
     body))

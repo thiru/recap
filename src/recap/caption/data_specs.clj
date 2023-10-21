@@ -19,4 +19,3 @@
 
 (s/def ::caption (s/keys :opt-un [::header]
                          :req-un [::cues]))
-
