@@ -9,8 +9,10 @@
 
 (defmacro PP
   "Convenience macro to pretty-print last evaluated result at the REPL."
-  []
-  `(puget/cprint *1))
+  ([]
+   `(puget/cprint *1))
+  ([val]
+   `(puget/cprint ~val)))
 
 (defn install-expound-printer
   "Replace Clojure Spec's default printer with Expound's printer.
