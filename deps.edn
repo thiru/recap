@@ -23,5 +23,8 @@
   ;; JSON encoding/decoding:
   cheshire/cheshire {:mvn/version "5.12.0"}
 
+  ;; ANSI escape code support (cross platform):
+  jansi-clj/jansi-clj {:mvn/version "1.0.1"}
+
   ;; Colourised Clojure pretty-printer:
   mvxcvi/puget {:mvn/version "1.3.4"}}}

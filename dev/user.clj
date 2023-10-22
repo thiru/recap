@@ -21,6 +21,7 @@
     [recap.main :as main]
     [recap.trint :as trint]
     [utils.common :as u]
+    [utils.log :as log]
     [utils.nrepl :as nrepl]
     [utils.printing :as printing :refer [PP]]
     [utils.results :as r]))
