@@ -9,6 +9,16 @@ COMMANDS:
 contiguous <FILE>
   Find contiguous, same speaker tags and remove them
 
+essay <FILE> [<MAX-CHARS>]
+  Convert captions to essay/paragraph form
+  MAX-CHARS
+    Specifies the preferred maximum number of characters in a paragraph.
+    A paragraph is created when one of the following conditions are met:
+    - There's a speaker tag
+    - The previous line ends with a hard stop and MAX-CHARS since the last paragraph has been
+      reached
+    By default MAX-CHARS is 1000 characters (approx 200 words)
+
 fixup <FILE>
   Fixup some common mistakes and follow certain captioning conventions
 

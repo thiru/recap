@@ -73,6 +73,14 @@ $ recap text input.vtt > output.txt
 
 -----
 
+Convert the captions in _input.vtt_ to essay/paragraph form and save to _output.txt_.
+
+```shell
+$ recap essay input.vtt > output.txt
+```
+
+-----
+
 Parse _input.vtt_ as a Clojure map and save it to _output.edn_.
 
 ```shell

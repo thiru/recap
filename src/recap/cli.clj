@@ -94,6 +94,19 @@
                       cap/strip-contiguous-speaker-tags
                       (r/r :success)))
 
+(defn essay-sub-cmd
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
+  (let [max-chars (-> args second
+                      (u/parse-int :fallback cap/default-max-chars-per-para))
+        to-essay-form #(cap/to-essay-form % :max-chars-per-para max-chars)]
+    (r/while-success->> (or stdin (u/slurp-file (first args)))
+                        cap/parse
+                        :cues
+                        to-essay-form
+                        (r/r :success))))
+
 (defn fixup-sub-cmd
   {:args (s/cat :_cli-r ::cli-r)
    :ret ::cli-r}
@@ -206,6 +219,9 @@
 
     "contiguous"
     (contiguous-sub-cmd cli-r)
+
+    "essay"
+    (essay-sub-cmd cli-r)
 
     "fixup"
     (fixup-sub-cmd cli-r)

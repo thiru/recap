@@ -16,6 +16,8 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
+(def default-max-chars-per-para 1000)
+
 (defn empty-caption?
   "Determine whether the given caption has any content (i.e. no cues)."
   {:args (s/cat :caption ::dspecs/caption)
@@ -152,6 +154,48 @@
        (map #(str % "\n"))
        str/join
        str/trim))
+
+
+(defn to-essay-form
+  "Convert the given cues to essay (paragraph) form. Timestamps are included only when there is a
+  speaker tag."
+  {:args (s/cat :cues ::dspecs/cues
+                :kwargs (s/keys* :opt-un []))
+   :ret string?}
+  [cues & {:keys [max-chars-per-para]
+           :or {max-chars-per-para default-max-chars-per-para}}]
+  (letfn [(fmt-timecode [cue]
+            (->> cue :start (re-find #"\d+:\d+:\d+")))
+          (flatten-cue-lines [cue]
+            (loop [[curr-line & rest-lines] (:lines cue)
+                   flattened-line ""]
+              (if (nil? curr-line)
+                flattened-line
+                (let [has-speaker-tag? (speaker/get-speaker-tag curr-line)
+                      new-lines (if has-speaker-tag?
+                                  (str flattened-line (str "\n\n" (fmt-timecode cue) "\n" curr-line " "))
+                                  (str flattened-line curr-line " "))]
+                  (recur rest-lines new-lines)))))]
+    (loop [[curr-cue & rest-cues] cues
+           chars-since-last-para 0
+           new-lines []]
+      (if (nil? curr-cue)
+        (-> new-lines str/join str/trim (str/replace #"\n\n\n+" "\n\n"))
+        (let [flattened-line (flatten-cue-lines curr-cue)
+              insert-new-para? (and (> chars-since-last-para max-chars-per-para)
+                                    (not (re-find #"\n" flattened-line))
+                                    (->> flattened-line (re-find #"[.!?]['\"]?\s*$")))
+              chars-since-last-para (if insert-new-para?
+                                      0
+                                      (+ chars-since-last-para
+                                         ;; NOTE: not sure why this type hint is necessary
+                                         ^long (cue/char-count curr-cue)))
+              flattened-line (if insert-new-para?
+                               (str flattened-line "\n\n")
+                               flattened-line)]
+          (recur rest-cues
+                 chars-since-last-para
+                 (conj new-lines flattened-line)))))))
 
 
 (defn find-overlapping-cues
