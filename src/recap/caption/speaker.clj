@@ -26,10 +26,9 @@
 
 
 (defn get-speaker-tag-srt
-  "SRT files don't have special notation for speaker tags so we try our best to
-  match on some basic assumptions on how one is typically formatted. I.e. it
-  should be some capitalised text followed by a colon, at the beginning of a
-  line with at most one space within (i.e. at most two words).
+  "SRT files don't have special notation for speaker tags so we try our best to match on some basic
+  assumptions on how one is typically formatted. I.e. it should be some capitalised text followed
+  by a colon, at the beginning of a line with at most one space within (i.e. at most two words).
 
   An example speaker tag: `Bob:`."
   [text]
