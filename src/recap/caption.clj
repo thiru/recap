@@ -16,7 +16,11 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
+(s/def ::max-chars-per-para pos-int?)
+
+
 (def default-max-chars-per-para 1000)
+
 
 (defn empty-caption?
   "Determine whether the given caption has any content (i.e. no cues)."
@@ -160,7 +164,7 @@
   "Convert the given cues to essay (paragraph) form. Timestamps are included only when there is a
   speaker tag."
   {:args (s/cat :cues ::dspecs/cues
-                :kwargs (s/keys* :opt-un []))
+                :kwargs (s/keys* :opt-un [::max-chars-per-para]))
    :ret string?}
   [cues & {:keys [max-chars-per-para]
            :or {max-chars-per-para default-max-chars-per-para}}]
