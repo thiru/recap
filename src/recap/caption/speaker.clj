@@ -27,13 +27,13 @@
 
 (defn get-speaker-tag-srt
   "SRT files don't have special notation for speaker tags so we try our best to match on some basic
-  assumptions on how one is typically formatted. I.e. it should be some capitalised text followed
-  by a colon, at the beginning of a line with at most one space within (i.e. at most two words).
+  assumptions on how one is typically formatted. I.e. it should be one or more capitalised words
+  followed by a colon and at the beginning of the line.
 
   An example speaker tag: `Bob:`."
   [text]
   (->> text
-       (re-find #"^([A-Z][\w-]*)(\s+[\w-]*)?(:+)")
+       (re-find #"^([A-Z][\w-]*)(\s+[A-Z0-9][\w-]*)*(:+)")
        first))
 
 (defn get-speaker-tag-webvtt
@@ -63,10 +63,12 @@
 (comment
   (get-speaker-tag "Q1: hello")
   (get-speaker-tag "Q1:: hello")
+  (get-speaker-tag "Speaker 1: hello")
   (get-speaker-tag "Al: hello")
   (get-speaker-tag "Al-Bob: hello")
   (get-speaker-tag "Al Bob: hello")
   (get-speaker-tag "Al bob: hello")
+  (get-speaker-tag "Al Bob Cate: hello")
   (get-speaker-tag "Al bob cate: hello")
   (get-speaker-tag "<v Al bob cate:> hello")
   (get-speaker-tag "Hi, Al: hello"))
