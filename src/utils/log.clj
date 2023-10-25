@@ -1,5 +1,6 @@
 (ns utils.log
   "Simple/naive logging."
+  {:clj-kondo/config '{:linters {:unresolved-var {:exclude [jansi-clj.core]}}}}
   (:refer-clojure :exclude [defn])
   (:require
             [clojure.spec.alpha :as s]
