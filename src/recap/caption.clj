@@ -16,10 +16,10 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
-(s/def ::max-chars-per-para pos-int?)
+(s/def ::max-chars-per-para nat-int?)
 
 
-(def default-max-chars-per-para 1000)
+(def default-max-chars-per-para 0)
 
 
 (defn empty-caption?
@@ -186,7 +186,8 @@
       (if (nil? curr-cue)
         (-> new-lines str/join str/trim (str/replace #"\n\n\n+" "\n\n"))
         (let [flattened-line (flatten-cue-lines curr-cue)
-              insert-new-para? (and (> chars-since-last-para max-chars-per-para)
+              insert-new-para? (and (pos-int? max-chars-per-para)
+                                    (> chars-since-last-para max-chars-per-para)
                                     (not (re-find #"\n" flattened-line))
                                     (->> flattened-line (re-find #"[.!?]['\"]?\s*$")))
               chars-since-last-para (if insert-new-para?
