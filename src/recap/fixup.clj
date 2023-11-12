@@ -3,7 +3,7 @@
   (:require
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
-            [utils.common :as u]))
+            [recap.utils.common :as u]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm

@@ -1,4 +1,4 @@
-(ns utils.specin
+(ns recap.utils.specin
   "Facilitates defining function specs inline and automatic instrumentation.
 
   This is mostly taken from the following library with some minor changes:

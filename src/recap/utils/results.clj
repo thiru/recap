@@ -1,8 +1,8 @@
-(ns utils.results
+(ns recap.utils.results
   "Generic facilities around reporting and validation."
   (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
-            [utils.specin :refer [defn]]))
+            [recap.utils.specin :refer [defn]]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm

@@ -5,9 +5,9 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [recap.caption.data-specs :as dspecs]
-            [utils.common :as u]
-            [utils.specin :refer [defn]]
-            [utils.results :as r]))
+            [recap.utils.common :as u]
+            [recap.utils.specin :refer [defn]]
+            [recap.utils.results :as r]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm

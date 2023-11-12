@@ -20,11 +20,11 @@
     [recap.config :as cfg]
     [recap.main :as main]
     [recap.trint :as trint]
-    [utils.common :as u]
-    [utils.log :as log]
+    [recap.utils.common :as u]
+    [recap.utils.log :as log]
+    [recap.utils.results :as r]
     [utils.nrepl :as nrepl]
-    [utils.printing :as printing :refer [PP]]
-    [utils.results :as r]))
+    [utils.printing :as printing :refer [PP]]))
 
 (defonce initialised? (atom false))
 

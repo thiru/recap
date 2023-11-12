@@ -1,4 +1,4 @@
-(ns utils.common
+(ns recap.utils.common
   "Common/generic utilities."
   (:refer-clojure :exclude [defn])
   (:require [better-cond.core :as b]
@@ -6,8 +6,8 @@
             [clojure.string :as str]
             [clojure.java.io :as io]
             [puget.printer :as puget]
-            [utils.specin :refer [defn]]
-            [utils.results :as r]))
+            [recap.utils.specin :refer [defn]]
+            [recap.utils.results :as r]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm

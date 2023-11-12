@@ -7,8 +7,8 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [recap.config :as cfg]
-            [utils.common :as u]
-            [utils.results :as r]))
+            [recap.utils.common :as u]
+            [recap.utils.results :as r]))
 
 
 (declare api-key

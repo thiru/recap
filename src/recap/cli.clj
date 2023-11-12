@@ -5,14 +5,14 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [puget.printer :as puget]
-            [utils.common :as u]
-            [utils.specin :refer [defn]]
-            [utils.results :as r]
             [recap.caption :as cap]
             [recap.caption.linger :as linger]
             [recap.caption.restitch :as restitch]
             [recap.fixup :as fixup]
-            [recap.trint :as trint]))
+            [recap.trint :as trint]
+            [recap.utils.common :as u]
+            [recap.utils.specin :refer [defn]]
+            [recap.utils.results :as r]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm

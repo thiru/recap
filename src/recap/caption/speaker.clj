@@ -2,8 +2,8 @@
   (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
             [recap.caption.data-specs :as dspecs]
-            [utils.common :as u]
-            [utils.specin :refer [defn]]))
+            [recap.utils.common :as u]
+            [recap.utils.specin :refer [defn]]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm

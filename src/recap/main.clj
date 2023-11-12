@@ -2,8 +2,8 @@
   "Entry-point into the application."
   (:refer-clojure :exclude [defn])
   (:require [recap.cli :as cli]
-            [utils.common :as u]
-            [utils.specin :refer [defn]])
+            [recap.utils.common :as u]
+            [recap.utils.specin :refer [defn]])
   (:gen-class))
 
 

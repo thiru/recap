@@ -1,4 +1,4 @@
-(ns utils.log
+(ns recap.utils.log
   "Simple/naive logging."
   {:clj-kondo/config '{:linters {:unresolved-var {:exclude [jansi-clj.core]}}}}
   (:refer-clojure :exclude [defn])
@@ -6,9 +6,9 @@
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [jansi-clj.core :as jansi]
-            [utils.log :as log]
-            [utils.results :as r]
-            [utils.specin :refer [defn]]))
+            [recap.utils.log :as log]
+            [recap.utils.results :as r]
+            [recap.utils.specin :refer [defn]]))
 
 
 (set! *warn-on-reflection* true) ; for graalvm
