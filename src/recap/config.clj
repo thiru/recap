@@ -16,16 +16,32 @@
 (declare load-config)
 
 
+(def default-config
+  {:absolute-max-chars-per-line 50
+   :breakable-clause-ender-min-chars 8
+   :breakable-any-punctuation-min-chars 23
+   ;; The only difference from `:ends-with-clause-ending-punctuation` is this includes a comma
+   :ends-with-any-punctuation "[,.!?;:\\]'\"—–-]['\"]?$"
+   :ends-with-clause-ending-punctuation "[.!?;:\\]'\"—–-]['\"]?$"
+   :force-new-cue-tolerance-secs 3
+   :ideal-max-chars-per-line 38
+   :max-lines-per-cue 2
+   :trint
+   {:api-key ""
+    :opts {:captions-by-paragraph false
+           :max-subtitle-character-length 1
+           :highlights-only false
+           :enable-speakers true
+           :speaker-on-new-line true
+           :speaker-uppercase false
+           :skip-strikethroughs false}
+    :srt-url "https://api.trint.com/export/srt/"
+    :webvtt-url "https://api.trint.com/export/webvtt/"}})
+
 (def active-cfg
   (delay (-> (load-config)
              (update :ends-with-any-punctuation re-pattern)
              (update :ends-with-clause-ending-punctuation re-pattern))))
-
-(def default-config
-  "Default config (intentionally loaded at compile-time)."
-  (-> "default-config.edn"
-      slurp
-      edn/read-string))
 
 (defn read-config-file
   {:args (s/cat :file-obj #(instance? java.io.File %))
