@@ -10,4 +10,3 @@ reports/
 target/
 tmp/*
 !tmp/.gitkeep
-config.edn
