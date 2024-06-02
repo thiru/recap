@@ -42,6 +42,11 @@ restitch <FILE>
 text <FILE>
   Output text contents only (i.e. without timings, and other captions metadata)
 
+sonix-dl <srt|vtt> <ID>
+  Download captions for the specified document
+  ID
+    The id of the document in Sonix (typically the last component of the URL)
+
 trint-dl <srt|vtt> <ID>
   Download captions for the specified document
   ID
@@ -49,7 +54,7 @@ trint-dl <srt|vtt> <ID>
 
 -i
   Read from stdin as the primary input to the respective sub-command
-  This is typically the <FILE> argument. For trint-dl it is the <ID> argument.
+  This is typically the <FILE> argument. For sonix-dl it is the <ID> argument.
 
 --help, -h
   Show this help
@@ -61,4 +66,4 @@ EXAMPLES
 
 Recap can read from stdin when the -i flag is given
 This makes it easy to pipe commands together like so:
-  recap trint-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup
+  recap sonix-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup

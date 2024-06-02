@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -xe
+
+if [ $# -lt 1 ]; then
+  echo "Usage: dl-srt <DOCUMENT-ID>"
+  exit 1
+fi
+
+curl -XGET https://api.sonix.ai/v1/media/"$1"/transcript.srt -H "Authorization: Bearer $SONIX_API_KEY" \
+  -F speaker_display='as_typed' \
+  -F limit_captions=true \
+  -F subtitle_lines=1 \
+  -F max_characters=1 \
+  -F max_duration=1

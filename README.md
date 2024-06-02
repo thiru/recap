@@ -6,9 +6,9 @@ The original (and main) goal of this tool was to alter captions so that they rea
 
 ## Background
 
-The need for this tool was born out of editing captions generated from STT tools like [Otter](https://otter.ai/home), [Trint](https://trint.com/) and even [OpenAI Whisper](https://github.com/openai/whisper). These tools do a great job at allowing users to create accurate transcripts quickly, and they also provide the ability to export a captions file from the transcript. However, the captions export only contains some basic options (if any) like: the maximum number of characters per line, number of lines per caption, etc. These captions as is, don't read particularly well. So, some extra work was needed to be done in a caption editor such as [Amara](https://amara.org/).
+The need for this tool was born out of editing captions generated from STT tools like [Otter](https://otter.ai/home), [Sonix](https://my.sonix.ai/), [Trint](https://trint.com/) and even [OpenAI Whisper](https://github.com/openai/whisper). These tools do a great job at allowing users to create accurate transcripts quickly, and they also provide the ability to export a captions file from the transcript. However, the captions export only contains some basic options (if any) like: the maximum number of characters per line, number of lines per caption, etc. These captions as is, don't read particularly well. So, some extra work was needed to be done in a caption editor such as [Amara](https://amara.org/).
 
-We realised that much of the editing done in Amara could be accomplished programmatically if we knew the time position of each word. Luckily Otter and Trint allow you to export captions with just a one word (or very close to that) per line. With such a caption file we could **restitch** the words and create captions that read more fluently and to our liking. For example, ending a line or caption at a period, semi-colon or long pause just to name a few possibilities.
+We realised that much of the editing done in Amara could be accomplished programmatically if we knew the time position of each word. Luckily Otter, Sonix and Trint allow you to export captions with just a one word (or very close to that) per line. With such a caption file we could **restitch** the words and create captions that read more fluently and to our liking. For example, ending a line or caption at a period, semi-colon or long pause just to name a few possibilities.
 
 ## Usage
 
@@ -89,6 +89,16 @@ $ recap parse input.vtt > output.edn
 
 -----
 
+Download captions from Sonix. For this you need to have a valid Sonix API key specified in _config.edn_.
+
+```shell
+$ recap sonix-dl srt "abc123"
+```
+
+Where "abc123" is the id of the respective document in Sonix.
+
+-----
+
 Download captions from Trint. For this you need to have a valid Trint API key specified in _config.edn_.
 
 ```shell
@@ -102,7 +112,7 @@ Where "abc123" is the id of the respective document in Trint.
 Recap can read from stdin making it easy to pipe commands together like so:
 
 ```shell
-$ recap trint-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup
+$ recap sonix-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup
 ```
 
 -----

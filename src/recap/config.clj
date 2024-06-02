@@ -26,6 +26,15 @@
    :force-new-cue-tolerance-secs 3
    :ideal-max-chars-per-line 38
    :max-lines-per-cue 2
+   :sonix
+   {:api-key ""
+    :opts {:limit_captions true
+           :max_characters 1
+           :max_duration 1
+           :speaker_display "as_typed"
+           :subtitle_lines 1}
+    :srt-url "https://api.sonix.ai/v1/media/%s/transcript.srt"
+    :webvtt-url "https://api.sonix.ai/v1/media/%s/transcript.vtt"}
    :trint
    {:api-key ""
     :opts {:captions-by-paragraph false

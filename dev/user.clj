@@ -19,6 +19,7 @@
     [recap.cli :as cli]
     [recap.config :as cfg]
     [recap.main :as main]
+    [recap.sonix :as sonix]
     [recap.trint :as trint]
     [recap.utils.common :as u]
     [recap.utils.log :as log]

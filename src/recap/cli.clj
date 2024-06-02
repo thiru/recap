@@ -9,6 +9,7 @@
             [recap.caption.linger :as linger]
             [recap.caption.restitch :as restitch]
             [recap.fixup :as fixup]
+            [recap.sonix :as sonix]
             [recap.trint :as trint]
             [recap.utils.common :as u]
             [recap.utils.specin :refer [defn]]
@@ -188,6 +189,15 @@
                       cap/to-plain-text
                       (r/r :success)))
 
+(defn sonix-dl-sub-cmd
+  {:args (s/cat :_cli-r ::cli-r)
+   :ret ::cli-r}
+  [{:keys [args stdin] :as _cli-r}]
+  (let [captions-format (-> args first keyword)
+        id (or stdin (second args))]
+    (r/while-success->> (sonix/get-captions captions-format id)
+                        (r/r :success))))
+
 (defn trint-dl-sub-cmd
   {:args (s/cat :_cli-r ::cli-r)
    :ret ::cli-r}
@@ -240,6 +250,9 @@
 
     "text"
     (text-sub-cmd cli-r)
+
+    "sonix-dl"
+    (sonix-dl-sub-cmd cli-r)
 
     "trint-dl"
     (trint-dl-sub-cmd cli-r)
