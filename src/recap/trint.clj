@@ -114,7 +114,7 @@
 
 (defn base-url [captions-format]
   (if (= :vtt captions-format)
-    (-> @cfg/active-cfg :trint :webvtt-url)
+    (-> @cfg/active-cfg :trint :vtt-url)
     (-> @cfg/active-cfg :trint :srt-url)))
 
 (defn api-key []

@@ -34,7 +34,7 @@
            :speaker_display "as_typed"
            :subtitle_lines 1}
     :srt-url "https://api.sonix.ai/v1/media/%s/transcript.srt"
-    :webvtt-url "https://api.sonix.ai/v1/media/%s/transcript.vtt"}
+    :vtt-url "https://api.sonix.ai/v1/media/%s/transcript.vtt"}
    :trint
    {:api-key ""
     :opts {:captions-by-paragraph false
@@ -45,7 +45,7 @@
            :speaker-uppercase false
            :skip-strikethroughs false}
     :srt-url "https://api.trint.com/export/srt/"
-    :webvtt-url "https://api.trint.com/export/webvtt/"}})
+    :vtt-url "https://api.trint.com/export/webvtt/"}})
 
 (def active-cfg
   (delay (-> (load-config)

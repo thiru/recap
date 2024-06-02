@@ -48,7 +48,7 @@
 
 (defn base-url [captions-format]
   (if (= :vtt captions-format)
-    (-> @cfg/active-cfg :sonix :webvtt-url)
+    (-> @cfg/active-cfg :sonix :vtt-url)
     (-> @cfg/active-cfg :sonix :srt-url)))
 
 (defn api-key []

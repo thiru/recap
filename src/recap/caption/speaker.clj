@@ -10,7 +10,7 @@
 
 
 (declare get-speaker-tag-srt
-         get-speaker-tag-webvtt)
+         get-speaker-tag-vtt)
 
 
 (defn get-speaker-tag
@@ -21,7 +21,7 @@
    :ret (s/or :found string?
               :not-found nil?)}
   [text]
-  (or (get-speaker-tag-webvtt text)
+  (or (get-speaker-tag-vtt text)
       (get-speaker-tag-srt text)))
 
 
@@ -36,7 +36,7 @@
        (re-find #"^([A-Z][\w-]*)(\s+[A-Z0-9][\w-]*)*(:+)")
        first))
 
-(defn get-speaker-tag-webvtt
+(defn get-speaker-tag-vtt
   "WebVTT files define a specific notation for speaker tags.
 
   An example speaker tag: `<v Bob>`."
