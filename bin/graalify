@@ -21,20 +21,28 @@ clojure -J-Dclojure.spec.compile-asserts=false -M -e "(compile 'recap.main)"
 # Build stand-alone binary:
 native-image \
   -cp "$(clojure -Spath):classes" \
-  -H:Name=target/recap \
   -H:+ReportExceptionStackTraces \
+  -J-Dclojure.spec.skip-macros=true \
+  -J-Dclojure.spec.compile-asserts=false \
+  -J-Dclojure.compiler.direct-linking=true \
   --initialize-at-build-time \
+  --enable-http \
+  --enable-https \
+  "--enable-all-security-services" \
   --install-exit-handlers \
   --diagnostics-mode \
-  --static \
   --verbose \
   --no-fallback \
   --report-unsupported-elements-at-runtime \
-  "-J-Dclojure.spec.compile-asserts=false" \
+  --static --libc=musl \
   "-J-Xmx16g" \
+  -o target/recap \
   recap.main
 
 # Explanation of some of the args above:
+
+# -march=native
+# Increased performance at the cost of compatibility
 
 # --initialize-at-build-time
 # This is needed for Clojure or else there will be strange errors
@@ -46,9 +54,9 @@ native-image \
 # Since GraalVM 22.0 this is needed in order to use the
 # --initialize-at-build-time option without arguments
 
-# --static
-# Don't depend on any system libraries. This flag was originally intended for
-# Alpine docker images and only works on Linux.
+# --static --libc=musl
+# Build statically linked binary (no dependencies)
+# See: https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/
 
 # --no-fallback
 # If native compilation fails, without this, it will create a fallback image
