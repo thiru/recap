@@ -41,6 +41,8 @@
         (str/replace #"--+" "—")
         ;; Replace contiguous colons with just one
         (str/replace #"::+" ":")
+        ;; Remove whitespace before certain punctuation marks
+        (str/replace #"[ \t]+([.!?:;,])" "$1")
         ;; Replace contiguous spaces with just one
         (str/replace #"  +" " ")
         ;; Trim spaces and tabs at beginning/end:
@@ -49,4 +51,4 @@
 
 
 (comment
-  (fixup " Q:: This &lt;i&gt;is&lt;/i&gt; some -- &nbsp; sample---test input OK, ok, okay ....  Good--&nbsp;"))
+  (fixup " Q :: This &lt;i&gt;is&lt;/i&gt; some -- &nbsp; sample---test input . OK ; ok , okay .... Hi ! Huh ? To :  Good--&nbsp;"))
