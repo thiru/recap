@@ -193,9 +193,10 @@
   {:args (s/cat :_cli-r ::cli-r)
    :ret ::cli-r}
   [{:keys [args stdin] :as _cli-r}]
-  (let [captions-format (-> args first keyword)
-        id (or stdin (second args))]
-    (r/while-success->> (sonix/get-captions captions-format id)
+  (let [id (or stdin (first args))]
+    (r/while-success->> (sonix/get-transcript id)
+                        (sonix/xscript->captions)
+                        (cap/to-string)
                         (r/r :success))))
 
 (defn trint-dl-sub-cmd

@@ -42,8 +42,8 @@ restitch <FILE>
 text <FILE>
   Output text contents only (i.e. without timings, and other captions metadata)
 
-sonix-dl <srt|vtt> <ID>
-  Download captions for the specified document
+sonix-dl <ID>
+  Download captions for the specified document in WebVTT format
   ID
     The id of the document in Sonix (typically the last component of the URL)
 
@@ -66,4 +66,4 @@ EXAMPLES
 
 Recap can read from stdin when the -i flag is given
 This makes it easy to pipe commands together like so:
-  recap sonix-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup
+  recap sonix-dl "document id" | recap -i restitch | recap -i linger | recap -i fixup

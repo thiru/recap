@@ -92,7 +92,7 @@ $ recap parse input.vtt > output.edn
 Download captions from Sonix. For this you need to have a valid Sonix API key specified in _config.edn_.
 
 ```shell
-$ recap sonix-dl srt "abc123"
+$ recap sonix-dl "abc123"
 ```
 
 Where "abc123" is the id of the respective document in Sonix.
@@ -112,7 +112,7 @@ Where "abc123" is the id of the respective document in Trint.
 Recap can read from stdin making it easy to pipe commands together like so:
 
 ```shell
-$ recap sonix-dl srt "document id" | recap -i restitch | recap -i linger | recap -i fixup
+$ recap sonix-dl "document id" | recap -i restitch | recap -i linger | recap -i fixup
 ```
 
 -----
