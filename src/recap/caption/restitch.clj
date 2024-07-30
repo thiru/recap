@@ -42,12 +42,16 @@
            final-cues []]
       (if (and (empty? curr-input-cue) (empty? rest-input-cues))
         (-> caption
-            (assoc :cues (conj final-cues wip-cue))
+            (assoc :cues (if (cue/empty-cue? wip-cue)
+                           final-cues
+                           (conj final-cues wip-cue)))
             (group-lines :max-lines-per-cue (:max-lines-per-cue opts)))
         (if (start-new-cue? wip-cue curr-input-cue opts)
           (recur rest-input-cues
                  curr-input-cue
-                 (conj final-cues wip-cue))
+                 (if (cue/empty-cue? wip-cue)
+                   final-cues
+                   (conj final-cues wip-cue)))
           (recur rest-input-cues
                  (cue/join-cues [wip-cue curr-input-cue]
                                 :concat-lines? true)
