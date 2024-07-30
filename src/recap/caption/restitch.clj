@@ -40,11 +40,9 @@
     (loop [[curr-input-cue & rest-input-cues] (rest cues)
            wip-cue (first cues)
            final-cues []]
-      (if (empty? rest-input-cues)
+      (if (and (empty? curr-input-cue) (empty? rest-input-cues))
         (-> caption
-            (assoc :cues
-                   (conj final-cues (cue/join-cues [wip-cue curr-input-cue]
-                                                   :concat-lines? true)))
+            (assoc :cues (conj final-cues wip-cue))
             (group-lines :max-lines-per-cue (:max-lines-per-cue opts)))
         (if (start-new-cue? wip-cue curr-input-cue opts)
           (recur rest-input-cues
