@@ -18,6 +18,7 @@
   base-url
   fix-broken-words
   http-get
+  remove-contiguous-speaker-tags
   safe-parse-json
   secs->duration
   speaker-section->cues)
@@ -90,18 +91,17 @@
     let [captions {:header ["WebVTT"]
                    :cues []}]
 
-    let [speakers (-> xscript-api-res :transcript)]
+    let [transcript (-> xscript-api-res :transcript)]
 
-    (empty? speakers)
+    (empty? transcript)
     captions
 
-    let [speakers (mapv #(update % :words fix-broken-words)
-                        speakers)]
-
-    let [cues (mapcat speaker-section->cues speakers)]
+    let [transcript (->> (remove-contiguous-speaker-tags transcript)
+                         (map #(update % :words fix-broken-words))
+                         (mapcat speaker-section->cues))]
 
     :else
-    (assoc captions :cues cues)))
+    (assoc captions :cues transcript)))
 
 
 (s/fdef get-captions
@@ -186,6 +186,29 @@
     body))
 
 
+(s/fdef remove-contiguous-speaker-tags
+        :args (s/cat :transcript ::transcript)
+        :ret ::transcript)
+(defn remove-contiguous-speaker-tags
+  "Remove contiguous same speaker tags from the given transcript object."
+  [transcript]
+  ;; Starting with the second speaker section as there's no need to modify the first one
+  (loop [[curr-speaker-section & rest-speaker-sections] (rest transcript)
+         prev-speaker (-> transcript first :speaker)
+         updated-transcript [(first transcript)]]
+    (if (and (empty? curr-speaker-section) (empty? rest-speaker-sections))
+      updated-transcript
+      (let [curr-speaker (if (str/blank? (:speaker curr-speaker-section))
+                          prev-speaker
+                          (:speaker curr-speaker-section))
+            updated-speaker-section (if (= curr-speaker prev-speaker)
+                                      (assoc curr-speaker-section :speaker nil)
+                                      curr-speaker-section)]
+        (recur rest-speaker-sections
+               curr-speaker
+               (conj updated-transcript updated-speaker-section))))))
+
+
 (s/fdef fix-broken-words
         :args (s/cat :words ::words)
         :ret ::words)
@@ -230,7 +253,8 @@
   [speaker-section]
   (map-indexed
     (fn [idx word]
-      {:lines [(if (zero? idx)
+      {:lines [(if (and (zero? idx)
+                        (not (str/blank? (:speaker speaker-section))))
                  (str (:speaker speaker-section) ": " (:text word))
                  (:text word))]
        :start (secs->duration (:start_time word))
