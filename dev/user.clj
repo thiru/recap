@@ -15,6 +15,7 @@
     [rebel-readline.main :as rebel]
     [recap.caption :as cap]
     [recap.caption.cue :as cue]
+    [recap.caption.linger :as linger]
     [recap.caption.restitch :as restitch]
     [recap.cli :as cli]
     [recap.config :as cfg]
