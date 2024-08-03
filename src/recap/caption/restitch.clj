@@ -1,6 +1,7 @@
 (ns recap.caption.restitch
   (:refer-clojure :exclude [defn])
   (:require [clojure.spec.alpha :as s]
+            [clojure.string :as str]
             [better-cond.core :as b]
             [recap.caption.cue :as cue]
             [recap.caption.data-specs :as dspecs]
@@ -14,8 +15,10 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
-(declare group-lines
-         start-new-cue?)
+(declare
+  add-prev-speaker
+  group-lines
+  start-new-cue?)
 
 
 (s/def ::force-new-cue-tolerance-secs float?)
@@ -45,7 +48,8 @@
             (assoc :cues (if (cue/empty-cue? wip-cue)
                            final-cues
                            (conj final-cues wip-cue)))
-            (group-lines :max-lines-per-cue (:max-lines-per-cue opts)))
+            (group-lines :max-lines-per-cue (:max-lines-per-cue opts))
+            (add-prev-speaker))
         (if (start-new-cue? wip-cue curr-input-cue opts)
           (recur rest-input-cues
                  curr-input-cue
@@ -204,6 +208,39 @@
             (recur rest-input-cues
                    curr-input-cue
                    (conj final-cues wip-cue))))))))
+
+
+(defn add-prev-speaker
+  "If there's a speaker change within the same cue add the previous speaker back in."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret ::dspecs/caption}
+  [caption]
+  (loop [[curr-cue & rest-cues] (-> caption :cues)
+         last-speaker (-> caption :cues first :lines first speaker/get-speaker-tag (or ""))
+         final-cues []]
+    (if (and (empty? rest-cues) (cue/empty-cue? curr-cue))
+      (assoc caption :cues final-cues)
+      (let [new-speaker (->> curr-cue
+                             :lines
+                             (map speaker/get-speaker-tag)
+                             (filter #(not (str/blank? %)))
+                             last)
+            new-speaker (or new-speaker last-speaker)]
+        ;; No need to do anything if there's only 1 line in this cue
+        (if (>= 1 (count (:lines curr-cue)))
+          (recur rest-cues
+                 new-speaker
+                 (conj final-cues curr-cue))
+          ;; HACK: this is a bit of a hack since it assumes there won't be more than 2 lines
+          (let [last-line-speaker (-> curr-cue :lines last speaker/get-speaker-tag)]
+            (if (or (str/blank? last-line-speaker)
+                    (= last-speaker last-line-speaker))
+              (recur rest-cues
+                   new-speaker
+                   (conj final-cues curr-cue))
+              (recur rest-cues
+                     new-speaker
+                     (conj final-cues (update-in curr-cue [:lines 0] #(str last-speaker " " %)))))))))))
 
 (comment
   (clause-ender? "sdf;")
