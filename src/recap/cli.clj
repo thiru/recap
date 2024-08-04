@@ -121,6 +121,7 @@
                             cues))))]
     (r/while-success->> (or stdin (u/slurp-file (first args)))
                         cap/parse
+                        cap/fix-overlapping-cues
                         clean-cue-lines
                         cap/to-string
                         (r/r :success))))

@@ -282,6 +282,52 @@
                        (str/join divider overlapping-cues)))))
 
 
+(defn fix-overlapping-cues
+  "In cases where a cue's start time occurs before the previous cue's end
+  time, change the latter cue's start time so it starts at the previous cue's
+  end time. This issue has been observed when exporting content from Otter and
+  Sonix."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret ::dspecs/caption}
+  [captions]
+  ;; Skip first cue since we're always comparing with previous cues
+  (loop [[curr-cue & rest-cues] (-> captions :cues rest)
+         prev-cue (-> captions :cues first)
+         fixed-cues [prev-cue]]
+    (b/cond
+      (and (empty? curr-cue) (empty? rest-cues))
+      (assoc captions :cues fixed-cues)
+
+      let [prev-cue-end-secs (u/duration->secs (:end prev-cue))]
+
+      (r/failed? prev-cue-end-secs)
+      (r/r :error (format "Failed to parse end time of cue:\n%s\n%s"
+                          (cue/to-string prev-cue)
+                          (if (r/result? prev-cue-end-secs)
+                            (:message prev-cue-end-secs)
+                            "")))
+
+      let [curr-cue-start-secs (u/duration->secs (:start curr-cue))]
+
+      (r/failed? curr-cue-start-secs)
+      (r/r :error (format "Failed to parse end time of cue:\n%s\n%s"
+                          (cue/to-string curr-cue)
+                          (if (r/result? curr-cue-start-secs)
+                            (:message curr-cue-start-secs)
+                            "")))
+
+      let [overlaps? (> prev-cue-end-secs
+                        curr-cue-start-secs)
+           curr-cue (if overlaps?
+                      (assoc curr-cue :start (:end prev-cue))
+                      curr-cue)]
+
+      :else
+      (recur rest-cues
+             curr-cue
+             (conj fixed-cues curr-cue)))))
+
+
 (defn strip-contiguous-speaker-tags
   "Remove contiguous same speaker tags from the given captions.
 
