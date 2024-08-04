@@ -2,4 +2,6 @@
  :linters {:namespace-name-mismatch {:level :warn}
            :not-empty? {:level :off}
            :unused-namespace {:exclude [recap.utils.common]}}
- :lint-as {recap.utils.specin/defn clojure.core/defn}}
+ :lint-as {recap.utils.results/while-success-> clojure.core/->
+           recap.utils.results/while-success->> clojure.core/->>
+           recap.utils.specin/defn clojure.core/defn}}
