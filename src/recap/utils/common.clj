@@ -72,13 +72,19 @@
 
 (defmacro spy
   "A simpler version of Timbre's spy which simply pretty-prints to stdout
-  and returns the eval'd expression."
+  and returns the eval'd expression.
+
+  NOTE: Making use of `s/*compile-asserts*` as means of disabling printing
+  since this is essentially a debugging tool and we don't want debug output
+  in release mode."
   [expr]
-  `(let [evaled# ~expr
-         caller# (get-last-caller)]
-     (print (format "[%s:%d] %s => " (:fn caller#) (:line caller#) '~expr))
-     (puget/cprint evaled#)
-     evaled#))
+  (if (not s/*compile-asserts*)
+    `~expr
+    `(let [evaled# ~expr
+           caller# (get-last-caller)]
+       (print (format "[%s:%d] %s => " (:fn caller#) (:line caller#) '~expr))
+       (puget/cprint evaled#)
+       evaled#)))
 
 
 (defn read-stdin
