@@ -97,11 +97,12 @@
 
 (defn start-new-cue?
   "Determine whether this is an ideal point to create a cue. I.e to start a
-  new cue at `wip-cue`."
+  new cue at `wip-cue`.
+
+  Returns a truthy value."
   {:args (s/cat :wip-cue ::dspecs/cue
                 :next-cue ::dspecs/cue
-                :opts map?)
-   :ret boolean?}
+                :opts map?)}
   [wip-cue next-cue opts]
   (b/cond
     let [wip-cue-text (-> wip-cue :lines last (or ""))
@@ -109,7 +110,7 @@
 
     ;; Always start a new line on speaker tag
     (speaker/get-speaker-tag next-cue-text)
-    true
+    (u/spy (and "NEW CUE -> speaker tag found" wip-cue))
 
     let [wip-cue-char-count (cue/char-count wip-cue)
          next-cue-char-count (cue/char-count next-cue)]
@@ -118,11 +119,11 @@
     (<= (:absolute-max-chars-per-line opts) (+ wip-cue-char-count
                                                1 ; space between
                                                next-cue-char-count))
-    true
+    (u/spy (and "NEW CUE -> :absolute-max-chars-per-line reached" wip-cue))
 
     ;; Break line if there's a longish silence
     (has-long-gap? wip-cue next-cue)
-    true
+    (u/spy (and "NEW CUE -> longish silence" wip-cue))
 
     ;; Avoid lines starting with a single word ending in a punctuation mark,
     ;; unless previous line ends in a clause-ending punctuation mark
@@ -135,7 +136,7 @@
     (and (>= wip-cue-char-count
              (:breakable-clause-ender-min-chars opts))
          (clause-ender? wip-cue-text))
-    true
+    (u/spy (and "NEW CUE -> clause-ending regex and min chars criteria met" wip-cue))
 
     ;; Break line if the current cue ends in any punctuation mark and the next
     ;; word does not end in a punctuation mark, while the minimum number of
@@ -144,7 +145,7 @@
              (:breakable-any-punctuation-min-chars opts))
          (punctuation-ender? wip-cue-text)
          (not (punctuation-ender? (-> next-cue :lines last))))
-    true
+    (u/spy (and "NEW CUE -> any-punctuation regex and min chars criteria met" wip-cue))
 
     let [wip-cue-is-opener? (re-find #"^['\[]" wip-cue-text)
          wip-cue-is-closer? (re-find #"['\]],?$" wip-cue-text)]
@@ -154,9 +155,12 @@
     (and wip-cue-is-closer? (not wip-cue-is-opener?))
     false
 
-    :else
     (<= (:ideal-max-chars-per-line opts)
-        wip-cue-char-count)))
+        wip-cue-char-count)
+    (u/spy (and "NEW CUE -> :ideal-max-chars-per-line criteria met" wip-cue))
+
+    :else
+    false))
 
 
 (defn force-new-cue-for-full-stop?
