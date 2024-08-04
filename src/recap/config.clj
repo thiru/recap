@@ -26,6 +26,7 @@
    :force-new-cue-tolerance-secs 3
    :ideal-max-chars-per-line 38
    :max-lines-per-cue 2
+   :min-cue-duration-secs 1.7
    :sonix
    {:api-key ""
     :json {:url "https://api.sonix.ai/v1/media/%s/transcript.json"}

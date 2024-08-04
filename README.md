@@ -164,6 +164,10 @@ What follows is a description of all available options. All of these apply to th
 - `:max-lines-per-cue`
     - default `2`
     - Specifies the maximum number of lines per caption/cue
+- `:min-cue-duration-secs`
+    - default `1.7`
+    - Specifies the ideal minimum number of seconds in a cue
+    - When a cue is less than this duration an attempt is made to combine it with the previous/next cue
 
 ## Development
 

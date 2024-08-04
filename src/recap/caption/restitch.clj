@@ -175,7 +175,8 @@
         second-last-char (nth cue-text (- cue-text-length 2) nil)]
     (and (>= cue-text-length (:breakable-clause-ender-min-chars @cfg/active-cfg))
          (or (= last-char \.) (= last-char \?) (= last-char \!))
-         (not (= second-last-char \.)))))
+         (not (= second-last-char \.))
+         (>= (cue/total-secs cue) (:min-cue-duration-secs @cfg/active-cfg)))))
 
 
 (defn group-lines
