@@ -226,16 +226,35 @@
          fixed-words [(first words)]]
     (if (and (empty? curr-word) (empty? rest-words))
       fixed-words
-      ;; There are two cases to handle here (doesn't apply to the first word):
-      ;; - The normal case where a word object starts with a space.
-      ;; - The abnormal case where a word object does not start a space. This is considered a bug
-      ;;   where a word may be broken up or a punctuation mark which is not attached to the
-      ;;   previous word. In this case we join it with the previous word.
-      (if (str/starts-with? (:text curr-word) " ")
+      (b/cond
+        ;; Normal case where the word starts with a space
+        (str/starts-with? (:text curr-word) " ")
         (let [updated-word (update curr-word :text str/triml)]
           (recur rest-words
                  updated-word
                  (conj fixed-words updated-word)))
+
+        let [disjoint-punct (second (re-find #"^([,.!?;:\]'\"—–-]+) " (:text curr-word)))]
+
+        ;; An abnormal case where a punctuation mark is attached to the next word
+        ;; (e.g. "end" and ". Start" should be "end." and "Start")
+        disjoint-punct
+        (let [new-prev-word (update prev-word :text #(str % disjoint-punct))
+              new-curr-word (update curr-word :text #(-> %
+                                                         (subs (count disjoint-punct))
+                                                         (str/triml)))]
+          (recur rest-words
+                 new-curr-word
+                 (-> fixed-words
+                     butlast
+                     vec
+                     (conj new-prev-word new-curr-word))))
+
+        ;; An abnormal case where a word object does not start with a space. This is considered
+        ;; to be a bug where a word may be broken up or a punctuation mark is dijoint from the
+        ;; word it should be attached to and is now all alone. In this case we join it with the
+        ;; previous word.
+        :else
         (let [updated-word (assoc prev-word
                                   :text (str (:text prev-word) (:text curr-word))
                                   :end_time (:end_time curr-word))]
