@@ -8,6 +8,7 @@
             [recap.caption.restitch :as restitch]
             [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
+            [recap.config :as cfg]
             [recap.utils.common :as u]
             [recap.utils.specin :refer [defn]]
             [recap.utils.results :as r]))
@@ -217,17 +218,17 @@
     ;; Skip first cue since we're always comparing with previous cues
     (loop [[curr-cue & rest-cues] (rest cues)
            prev-cue (first cues)
-           curr-cue-num 2
+           curr-cue-idx 1
            overlapping-idxs []]
       (b/cond
         (and (empty? curr-cue) (empty? rest-cues))
-        (-> overlapping-idxs distinct sort vec)
+        overlapping-idxs
 
         let [prev-cue-end-secs (u/duration->secs (:end prev-cue))]
 
         (r/failed? prev-cue-end-secs)
         (r/r :error (format "Failed to parse end time of cue %d. %s"
-                            curr-cue-num
+                            curr-cue-idx
                             (if (r/result? prev-cue-end-secs)
                               (:message prev-cue-end-secs)
                               "")))
@@ -236,7 +237,7 @@
 
         (r/failed? curr-cue-start-secs)
         (r/r :error (format "Failed to parse end time of cue %d. %s"
-                            (inc curr-cue-num)
+                            (inc curr-cue-idx)
                             (if (r/result? curr-cue-start-secs)
                               (:message curr-cue-start-secs)
                               "")))
@@ -244,15 +245,41 @@
         let [overlaps? (> prev-cue-end-secs
                           curr-cue-start-secs)]
 
-        ;do (u/spy [prev-cue-end-secs curr-cue-start-secs overlaps?]) ; DEBUG
-
         :else
         (recur rest-cues
                curr-cue
-               (inc curr-cue-num)
+               (inc curr-cue-idx)
                (if overlaps?
-                 (conj overlapping-idxs curr-cue-num (dec curr-cue-num))
+                 (conj overlapping-idxs (dec curr-cue-idx) curr-cue-idx)
                  overlapping-idxs))))))
+
+
+(defn describe-overlapping-cues
+  "Describe the points in the given captions where cues overlap.
+  This function is essentially a user-friendly description of the result of
+  `find-overlapping-cues`."
+  {:args (s/cat :cues ::dspecs/cues
+                :overlapping-indeces (s/coll-of nat-int?))
+   :ret ::r/result}
+  [cues overlapping-indeces]
+  (b/cond
+    (or (empty? cues) (empty? overlapping-indeces))
+    (r/r :success "No overlapping cues")
+
+    let [overlapping-cues (mapv (fn [[a b]]
+                                  (str (cue/to-string (nth cues a))
+                                       "\n\n"
+                                       (cue/to-string (nth cues b))))
+                                (partition 2 overlapping-indeces))
+         divider (str "\n\n"
+                      (str/join (take (:absolute-max-chars-per-line @cfg/active-cfg) (repeat "-")))
+                      "\n\n")]
+
+    :else
+    (r/r :warn (format "Found %d overlapping cue(s):%s%s"
+                       (count overlapping-indeces)
+                       divider
+                       (str/join divider overlapping-cues)))))
 
 
 (defn strip-contiguous-speaker-tags

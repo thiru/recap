@@ -141,17 +141,12 @@
   {:args (s/cat :_cli-r ::cli-r)
    :ret ::cli-r}
   [{:keys [args stdin] :as _cli-r}]
-  (letfn [(indeces->result [indeces]
-            (if (empty? indeces)
-              (r/r :success "No overlapping cues found")
-              (r/r :success (format "Found %d overlapping cue(s) at the following positions:\n%s"
-                                    (count indeces)
-                                    (str/join ", " indeces)))))]
+  (letfn [(overlap-desc [cues]
+            (cap/describe-overlapping-cues cues (cap/find-overlapping-cues cues)))]
     (r/while-success-> (or stdin (u/slurp-file (first args)))
                        cap/parse
                        :cues
-                       cap/find-overlapping-cues
-                       indeces->result)))
+                       (overlap-desc))))
 
 (defn parse-sub-cmd
   {:args (s/cat :_cli-r ::cli-r)
