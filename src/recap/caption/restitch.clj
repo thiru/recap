@@ -125,6 +125,15 @@
     (has-long-gap? wip-cue next-cue)
     (u/spy (and "NEW CUE -> longish silence" wip-cue))
 
+    ;; Break line if the current cue ends in any punctuation mark and the next
+    ;; word starts a quoted or bracketed phrase and the minimum number of chars
+    ;; is reached
+    (and (>= wip-cue-char-count
+             (:breakable-clause-ender-min-chars opts))
+         (punctuation-ender? wip-cue-text)
+         (re-find #"^\s*['\"\[]" (-> next-cue :lines first)))
+    (u/spy (and "NEW CUE -> any-punctuation regex, next word bracketed and min chars criteria met" wip-cue))
+
     ;; Avoid lines starting with a single word ending in a punctuation mark,
     ;; unless previous line ends in a clause-ending punctuation mark
     (and (punctuation-ender? next-cue-text)
