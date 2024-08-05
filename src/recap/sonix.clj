@@ -273,8 +273,9 @@
                      (conj new-prev-word new-curr-word))))
 
         ;; An abnormal case where the current word doesn't start with a space and the previous
-        ;; word ends in a punctuation mark. In this case we don't want to join the words.
-        (re-find (:ends-with-any-punctuation @cfg/active-cfg) (:text prev-word))
+        ;; word ends in a punctuation mark or space. In this case we don't want to join the words.
+        (or (str/ends-with? (:text prev-word) " ")
+            (re-find (:ends-with-any-punctuation @cfg/active-cfg) (:text prev-word)))
         (recur rest-words
                curr-word
                (conj fixed-words curr-word))
