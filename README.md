@@ -139,7 +139,7 @@ You can supply your own config by creating an EDN file and placing it in one of 
 What follows is a description of all available options. All of these apply to the **restitch** command.
 
 - `:absolute-max-chars-per-line`
-    - default `50`
+    - default `47`
     - Specifies a hard upper limit on the number of characters allowed on a line
     - This rule has the highest precedence
 - `:breakable-clause-ender-min-chars`

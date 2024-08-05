@@ -17,7 +17,7 @@
 
 
 (def default-config
-  {:absolute-max-chars-per-line 50
+  {:absolute-max-chars-per-line 47
    :breakable-clause-ender-min-chars 8
    :breakable-any-punctuation-min-chars 23
    ;; The only difference from `:ends-with-clause-ending-punctuation` is this includes a comma
