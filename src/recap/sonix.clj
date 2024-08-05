@@ -225,7 +225,7 @@
                       ;; Replace contiguous whitespace with a single space
                       (str/replace #"\s+" " ")
                       ;; Replace hyphen with m-dash
-                      (str/replace #" - " "—")
+                      (str/replace #" - " "— ")
                       ;; Replace contiguous hyphens with m-dash
                       (str/replace #"--+" "—"))))
        words))
