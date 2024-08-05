@@ -18,10 +18,12 @@
   base-url
   fix-broken-words
   http-get
+  normalise-words
   remove-contiguous-speaker-tags
   safe-parse-json
   secs->duration
-  speaker-section->cues)
+  speaker-section->cues
+  split-multi-words)
 
 
 ;; NOTE: The following spec is based on the JSON response for retrieving a Sonix transcript.
@@ -97,7 +99,9 @@
     captions
 
     let [transcript (->> (remove-contiguous-speaker-tags transcript)
+                         (map #(update % :words normalise-words))
                          (map #(update % :words fix-broken-words))
+                         (map #(update % :words split-multi-words))
                          (mapcat speaker-section->cues))]
 
     :else
@@ -209,6 +213,24 @@
                (conj updated-transcript updated-speaker-section))))))
 
 
+(s/fdef normalise-words
+        :args (s/cat :words ::words)
+        :ret ::words)
+(defn normalise-words
+  "Make it easier to work with the given words."
+  [words]
+  (map (fn [word]
+         (update word :text
+                 #(-> %
+                      ;; Replace contiguous whitespace with a single space
+                      (str/replace #"\s+" " ")
+                      ;; Replace hyphen with m-dash
+                      (str/replace #" - " "—")
+                      ;; Replace contiguous hyphens with m-dash
+                      (str/replace #"--+" "—"))))
+       words))
+
+
 (s/fdef fix-broken-words
         :args (s/cat :words ::words)
         :ret ::words)
@@ -271,6 +293,53 @@
                      butlast
                      vec
                      (conj updated-word))))))))
+
+
+(s/fdef split-multi-words
+        :args (s/cat :words ::words)
+        :ret ::words)
+(defn split-multi-words
+  "Split word objects containing multiple words."
+  [words]
+  (loop [[word & rest-words] words
+         new-words []]
+    (if (and (empty? word) (empty? rest-words))
+      new-words
+      (b/cond
+        let [text (:text word)]
+
+        (or (str/blank? text)
+            (>= 1 (count text)))
+        (recur rest-words
+               (conj new-words word))
+
+        let [space-idx (str/index-of text " " 1)
+             text-length (count text)]
+
+        (or (nil? space-idx)
+            (= space-idx (dec text-length)))
+        (recur rest-words
+               (conj new-words word))
+
+        let [total-duration (-> (- (:end_time word) (:start_time word))
+                                (max 0.0))
+             part1-text (subs text 0 space-idx)
+             part2-text (subs text space-idx)
+             part1-percent (float (/ (count part1-text) text-length))
+             split-time (- (:end_time word)
+                           (* part1-percent total-duration))
+             part1-word (assoc word
+                               :text part1-text
+                               :end_time split-time)
+             part2-word (assoc word
+                               :text part2-text
+                               :start_time split-time)]
+
+        :else
+        ;; Put the second part of the split word back onto the queue in case it has more words
+        ;; that need to be split
+        (recur (cons part2-word rest-words)
+               (conj new-words part1-word))))))
 
 (s/fdef speaker-section->cues
         :args (s/cat :speaker-section ::speaker-section)
