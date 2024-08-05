@@ -250,6 +250,13 @@
                      vec
                      (conj new-prev-word new-curr-word))))
 
+        ;; An abnormal case where the current word doesn't start with a space and the previous
+        ;; word ends in a punctuation mark. In this case we don't want to join the words.
+        (re-find (:ends-with-any-punctuation @cfg/active-cfg) (:text prev-word))
+        (recur rest-words
+               curr-word
+               (conj fixed-words curr-word))
+
         ;; An abnormal case where a word object does not start with a space. This is considered
         ;; to be a bug where a word may be broken up or a punctuation mark is dijoint from the
         ;; word it should be attached to and is now all alone. In this case we join it with the

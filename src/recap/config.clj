@@ -21,8 +21,8 @@
    :breakable-clause-ender-min-chars 8
    :breakable-any-punctuation-min-chars 23
    ;; The only difference from `:ends-with-clause-ending-punctuation` is this includes a comma
-   :ends-with-any-punctuation "[,.!?;:\\]'\"—–-]['\"]?$"
-   :ends-with-clause-ending-punctuation "[.!?;:\\]'\"—–-]['\"]?$"
+   :ends-with-any-punctuation "[,.!?;:\\]'\"—–-]['\"]?\\s*$"
+   :ends-with-clause-ending-punctuation "[.!?;:\\]'\"—–-]['\"]?\\s*$"
    :force-new-cue-tolerance-secs 3
    :ideal-max-chars-per-line 38
    :max-lines-per-cue 2
