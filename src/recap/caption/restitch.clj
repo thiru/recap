@@ -110,7 +110,7 @@
 
     ;; Always start a new line on speaker tag
     (speaker/get-speaker-tag next-cue-text)
-    (u/spy (and "NEW CUE -> speaker tag found" wip-cue))
+    true #_(u/spy (and "NEW CUE -> speaker tag found" wip-cue))
 
     let [wip-cue-char-count (cue/char-count wip-cue)
          next-cue-char-count (cue/char-count next-cue)]
@@ -119,11 +119,11 @@
     (<= (:absolute-max-chars-per-line opts) (+ wip-cue-char-count
                                                1 ; space between
                                                next-cue-char-count))
-    (u/spy (and "NEW CUE -> :absolute-max-chars-per-line reached" wip-cue))
+    true #_(u/spy (and "NEW CUE -> :absolute-max-chars-per-line reached" wip-cue))
 
     ;; Break line if there's a longish silence
     (has-long-gap? wip-cue next-cue)
-    (u/spy (and "NEW CUE -> longish silence" wip-cue))
+    true #_(u/spy (and "NEW CUE -> longish silence" wip-cue))
 
     ;; Break line if the current cue ends in any punctuation mark and the next
     ;; word starts a quoted or bracketed phrase and the minimum number of chars
@@ -132,7 +132,7 @@
              (:breakable-clause-ender-min-chars opts))
          (punctuation-ender? wip-cue-text)
          (re-find #"^\s*['\"\[]" (-> next-cue :lines first)))
-    (u/spy (and "NEW CUE -> any-punctuation regex, next word bracketed and min chars criteria met" wip-cue))
+    true #_(u/spy (and "NEW CUE -> any-punctuation regex, next word bracketed and min chars criteria met" wip-cue))
 
     ;; Avoid lines starting with a single word ending in a punctuation mark,
     ;; unless previous line ends in a clause-ending punctuation mark
@@ -145,7 +145,7 @@
     (and (>= wip-cue-char-count
              (:breakable-clause-ender-min-chars opts))
          (clause-ender? wip-cue-text))
-    (u/spy (and "NEW CUE -> clause-ending regex and min chars criteria met" wip-cue))
+    true #_(u/spy (and "NEW CUE -> clause-ending regex and min chars criteria met" wip-cue))
 
     ;; Break line if the current cue ends in any punctuation mark and the next
     ;; word does not end in a punctuation mark, while the minimum number of
@@ -154,7 +154,7 @@
              (:breakable-any-punctuation-min-chars opts))
          (punctuation-ender? wip-cue-text)
          (not (punctuation-ender? (-> next-cue :lines last))))
-    (u/spy (and "NEW CUE -> any-punctuation regex and min chars criteria met" wip-cue))
+    true #_(u/spy (and "NEW CUE -> any-punctuation regex and min chars criteria met" wip-cue))
 
     let [wip-cue-is-opener? (re-find #"^['\[]" wip-cue-text)
          wip-cue-is-closer? (re-find #"['\]],?$" wip-cue-text)]
@@ -166,7 +166,7 @@
 
     (<= (:ideal-max-chars-per-line opts)
         wip-cue-char-count)
-    (u/spy (and "NEW CUE -> :ideal-max-chars-per-line criteria met" wip-cue))
+    true #_(u/spy (and "NEW CUE -> :ideal-max-chars-per-line criteria met" wip-cue))
 
     :else
     false))
