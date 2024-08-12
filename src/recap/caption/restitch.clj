@@ -234,27 +234,26 @@
          final-cues []]
     (if (and (empty? rest-cues) (cue/empty-cue? curr-cue))
       (assoc caption :cues final-cues)
-      (let [new-speaker (->> curr-cue
-                             :lines
-                             (map speaker/get-speaker-tag)
-                             (filter #(not (str/blank? %)))
-                             last)
-            new-speaker (or new-speaker last-speaker)]
+      (let [curr-cue-speakers (->> curr-cue :lines (map speaker/get-speaker-tag))
+            last-speaker-new (or (->> curr-cue-speakers
+                                      (filter #(not (str/blank? %)))
+                                      last)
+                                 last-speaker)]
         ;; No need to do anything if there's only 1 line in this cue
         (if (>= 1 (count (:lines curr-cue)))
           (recur rest-cues
-                 new-speaker
+                 last-speaker-new
                  (conj final-cues curr-cue))
           ;; HACK: this is a bit of a hack since it assumes there won't be more than 2 lines
-          (let [last-line-speaker (-> curr-cue :lines last speaker/get-speaker-tag)]
-            (if (or (str/blank? last-line-speaker)
-                    (= last-speaker last-line-speaker))
-              (recur rest-cues
-                   new-speaker
-                   (conj final-cues curr-cue))
-              (recur rest-cues
-                     new-speaker
-                     (conj final-cues (update-in curr-cue [:lines 0] #(str last-speaker " " %)))))))))))
+          (if (or (str/blank? (last curr-cue-speakers))
+                  (= last-speaker (last curr-cue-speakers))
+                  (not (empty? (first curr-cue-speakers))))
+            (recur rest-cues
+                 last-speaker-new
+                 (conj final-cues curr-cue))
+            (recur rest-cues
+                   last-speaker-new
+                   (conj final-cues (update-in curr-cue [:lines 0] #(str last-speaker " " %))))))))))
 
 (comment
   (clause-ender? "sdf;")
