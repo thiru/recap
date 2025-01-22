@@ -6,7 +6,7 @@
 (set! *warn-on-reflection* true) ; for graalvm
 
 
-(s/def ::duration #(re-find #"\d\d:\d\d:\d\d[,.]?\d*" %))
+(s/def ::duration #(re-find #"(\d\d:)+\d\d[,.]?\d*" %))
 
 (s/def ::start ::duration)
 (s/def ::end ::duration)

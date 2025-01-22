@@ -47,7 +47,7 @@
     (str/blank? input)
     {}
 
-    let [matches (re-matches #"(\d\d:\d\d:\d\d[,.]\d+)\s+-+>\s+(\d\d:\d\d:\d\d[,.]\d+)"
+    let [matches (re-matches #"((?:\d\d:)+\d\d[,.]\d+)\s+-+>\s+((?:\d\d:)+\d\d[,.]\d+)"
                              input)]
 
     (or (empty? matches)
