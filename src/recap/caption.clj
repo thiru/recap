@@ -282,6 +282,22 @@
                        (str/join divider overlapping-cues)))))
 
 
+(defn sort-cues
+  "Sort the cues according to start time."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret ::dspecs/caption}
+  [captions]
+  (update captions :cues #(sort-by :start %)))
+
+
+(defn remove-duplicate-cues
+  "Remove duplicate cues."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret ::dspecs/caption}
+  [captions]
+  (update captions :cues distinct))
+
+
 (defn fix-overlapping-cues
   "In cases where a cue's start time occurs before the previous cue's end
   time, change the latter cue's start time so it starts at the previous cue's
