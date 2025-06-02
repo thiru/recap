@@ -1,13 +1,31 @@
 #!/usr/bin/env bash
 
-# Build self-contained executable using GraalVM.
-# See this link for a reference native-image options:
+# Build a static, self-contained executable using GraalVM's native-image tool.
+#
+# See this link for a reference of native-image options:
 # https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOptions/
+#
+# Additionally, this self-contained executable is also statically linked meaning that it does not
+# depend on any external libraries whatsoever. See the following link for more details:
+# https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/
 
 if ! command -v native-image &> /dev/null; then
   echo 'GraalVM native-image command not found'
   exit 1
 fi
+
+if [ ! -n "${MUSL_HOME:-}" ]; then
+    echo "MUSL_HOME is either unset or empty"
+    exit 1
+fi
+
+PATH="$MUSL_HOME/bin:$PATH"
+
+SRC_NS=recap.main
+TARGET_FILE=target/recap
+
+echo "Building static, self-contained executable ($SRC_NS -> $TARGET_FILE)..."
+echo
 
 # Java compiled classes will be placed in this directory:
 mkdir -p classes
@@ -16,7 +34,7 @@ mkdir -p classes
 mkdir -p target
 
 # Compile Clojure:
-clojure -J-Dclojure.spec.compile-asserts=false -M -e "(compile 'recap.main)"
+clojure -J-Dclojure.spec.compile-asserts=false -M -e "(compile '$SRC_NS)"
 
 # Build stand-alone binary:
 native-image \
@@ -36,8 +54,8 @@ native-image \
   --report-unsupported-elements-at-runtime \
   --static --libc=musl \
   "-J-Xmx16g" \
-  -o target/recap \
-  recap.main
+  -o "$TARGET_FILE" \
+  $SRC_NS
 
 # Explanation of some of the args above:
 
@@ -56,7 +74,6 @@ native-image \
 
 # --static --libc=musl
 # Build statically linked binary (no dependencies)
-# See: https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/
 
 # --no-fallback
 # If native compilation fails, without this, it will create a fallback image
