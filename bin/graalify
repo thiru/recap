@@ -1,20 +1,23 @@
 #!/usr/bin/env bash
 
-# Build a static, self-contained executable using GraalVM's native-image tool.
+# Builds a static, self-contained executable using GraalVM's native-image tool.
 #
-# See this link for a reference of native-image options:
+# See the following for a reference of native-image options:
 # https://www.graalvm.org/latest/reference-manual/native-image/overview/BuildOptions/
 #
-# Additionally, this self-contained executable is also statically linked meaning that it does not
-# depend on any external libraries whatsoever. See the following link for more details:
+# Additionally, the self-contained executable is statically linked, meaning that it does not
+# depend on any external libraries whatsoever. This requires some additional setup such as the
+# musl toolchain. See the following for more details:
 # https://www.graalvm.org/latest/reference-manual/native-image/guides/build-static-executables/
+
+set -eou pipefail
 
 if ! command -v native-image &> /dev/null; then
   echo 'GraalVM native-image command not found'
   exit 1
 fi
 
-if [ ! -n "${MUSL_HOME:-}" ]; then
+if [ -z "${MUSL_HOME:-}" ]; then
     echo "MUSL_HOME is either unset or empty"
     exit 1
 fi
@@ -44,23 +47,20 @@ native-image \
   -J-Dclojure.spec.compile-asserts=false \
   -J-Dclojure.compiler.direct-linking=true \
   --initialize-at-build-time \
+  --install-exit-handlers \
+  --enable-preview \
   --enable-http \
   --enable-https \
-  "--enable-all-security-services" \
-  --install-exit-handlers \
   --diagnostics-mode \
-  --verbose \
   --no-fallback \
-  --report-unsupported-elements-at-runtime \
+  --native-image-info \
   --static --libc=musl \
+  --verbose \
   "-J-Xmx16g" \
   -o "$TARGET_FILE" \
-  $SRC_NS
+  "$SRC_NS"
 
 # Explanation of some of the args above:
-
-# -march=native
-# Increased performance at the cost of compatibility
 
 # --initialize-at-build-time
 # This is needed for Clojure or else there will be strange errors
@@ -72,20 +72,22 @@ native-image \
 # Since GraalVM 22.0 this is needed in order to use the
 # --initialize-at-build-time option without arguments
 
-# --static --libc=musl
-# Build statically linked binary (no dependencies)
+# --enable-preview
+# Allow classes to depend on preview features of this release
 
 # --no-fallback
 # If native compilation fails, without this, it will create a fallback image
-# which is a full JVM to run your program (don't want this typically).
+# which is a full JVM to run your program (don't want this typically)
 
-# --no-server
-# Without this GraalVM will start a backgroud server that will be used next
-# time
+# --native-image-info
+# Show the native toolchain information and executable’s build settings
 
-# --report-unsupported-elements-at-runtime
-# Handle unsupported elements/methods properly
+# --static --libc=musl
+# Build statically linked binary (no dependencies)
 
 # "-J-Xmx16g"
 # Limit GraalVM to the specified amount of RAM. More memory results in faster
-# builds but will an error out if you don't have enough RAM.
+# builds but will error out if you don't have enough RAM.
+
+# -march=native
+# Increased performance at the cost of compatibility
