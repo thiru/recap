@@ -29,6 +29,11 @@
    :min-cue-duration-secs 1.7
    :sonix
    {:api-key ""
+    :list-media-files {:url "https://api.sonix.ai/v1/media"
+                       :opts {:folder_id ""
+                              :page 1
+                              :search ""
+                              :status "completed"}}
     :media-status {:url "https://api.sonix.ai/v1/media/%s"}
     :json {:url "https://api.sonix.ai/v1/media/%s/transcript.json"}
     :srt {:url "https://api.sonix.ai/v1/media/%s/transcript.srt"

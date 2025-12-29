@@ -29,6 +29,7 @@
 ;; See: https://sonix.ai/docs/api#get_json
 
 (s/def ::doc-id string?)
+(s/def ::folder-id string?)
 
 (s/def ::name string?)
 (s/def ::quality_score (s/nilable string?))
@@ -68,6 +69,29 @@
     (r/r :error "No document id provided")
 
     let [api-res (http-get (format (-> @cfg/active-cfg :sonix :media-status :url) id))]
+
+    (r/failed? api-res)
+    api-res
+
+    :else
+    api-res))
+
+(defn list-media-files
+  "Get list of media files in the specified folder.
+  See the following link for more details:
+  https://sonix.ai/docs/api#list_media"
+  {:args (s/cat :id ::folder-id)
+   :ret (s/or :success map?
+              :failure ::r/result)}
+  [id]
+  (b/cond
+    (str/blank? id)
+    (r/r :error "No folder id provided")
+
+    let [opts {:form-params (-> @cfg/active-cfg :sonix :list-media-files :opts
+                                (assoc :folder_id id))}
+         api-res (http-get (format (-> @cfg/active-cfg :sonix :list-media-files :url) id)
+                           :opts opts)]
 
     (r/failed? api-res)
     api-res
@@ -382,6 +406,7 @@
                              {:text " three" :start_time 1 :end_time 2}]}]}
       (xscript->captions))
 
+  (list-media-files "invalid-id")
   (get-media-status "invalid-id")
   (get-captions :vtt "invalid-id")
   (get-transcript "invalid-id")
