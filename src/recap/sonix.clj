@@ -1,16 +1,16 @@
 (ns recap.sonix
   "Interop with Sonix's web API."
   (:require
-            [better-cond.core :as b]
-            [babashka.http-client :as http]
-            [cheshire.core :as json]
-            [clojure.spec.alpha :as s]
-            [clojure.string :as str]
-            [recap.caption.data-specs :as dspecs]
-            [recap.config :as cfg]
-            [recap.utils.common :as u]
-            [recap.utils.results :as r]))
-
+    [better-cond.core :as b]
+    [babashka.http-client :as http]
+    [cheshire.core :as json]
+    [clojure.spec.alpha :as s]
+    [clojure.string :as str]
+    [recap.caption.data-specs :as dspecs]
+    [recap.config :as cfg]
+    [recap.utils.common :as u]
+    [recap.utils.results :as r]
+    [recap.utils.specin :refer [defn]]))
 
 (declare
   api-key
@@ -24,7 +24,6 @@
   secs->duration
   speaker-section->cues
   split-multi-words)
-
 
 ;; NOTE: The following spec is based on the JSON response for retrieving a Sonix transcript.
 ;; See: https://sonix.ai/docs/api#get_json
@@ -56,14 +55,11 @@
   "Supported captions formats."
   #{:srt :vtt})
 
-
-(s/fdef get-transcript
-        :args (s/cat :id ::doc-id)
-        :ret (s/or :success ::xscript-api-res
-                   :failure ::r/result))
-
 (defn get-transcript
   "Get the transcript of the document with the specified id."
+  {:args (s/cat :id ::doc-id)
+   :ret (s/or :success ::xscript-api-res
+              :failure ::r/result)}
   [id]
   (b/cond
     (str/blank? id)
@@ -77,14 +73,11 @@
     :else
     api-res))
 
-
-(s/fdef xscript->captions
-        :args (s/cat :xscript-api-res ::xscript-api-res)
-        :ret (s/or :success ::dspecs/caption
-                   :failure ::r/result))
-
 (defn xscript->captions
   "Convert the Sonix-specific transcript document into our standard captions data structure."
+  {:args (s/cat :xscript-api-res ::xscript-api-res)
+   :ret (s/or :success ::dspecs/caption
+              :failure ::r/result)}
   [xscript-api-res]
   (b/cond
     (nil? xscript-api-res)
@@ -107,18 +100,15 @@
     :else
     (assoc captions :cues transcript)))
 
-
-(s/fdef get-captions
-        :args (s/cat :captions-format captions-formats
-                     :id ::doc-id)
-        :ret (s/or :success string?
-                   :failure ::r/result))
-
 (defn get-captions
   "Get the captions (SRT or WebVTT) of the document with the specified id.
   NOTE: There's a bug in Sonix that causes words to appear broken up and spaces before
   punctuation marks at times. So, it may be best to avoid using this function and use
   `get-transcript` with `xscript->captions` instead."
+  {:args (s/cat :captions-format captions-formats
+                :id ::doc-id)
+   :ret (s/or :success string?
+              :failure ::r/result)}
   [captions-format id]
   (b/cond
     (nil? captions-format)
@@ -189,12 +179,10 @@
     :else
     body))
 
-
-(s/fdef remove-contiguous-speaker-tags
-        :args (s/cat :transcript ::transcript)
-        :ret ::transcript)
 (defn remove-contiguous-speaker-tags
   "Remove contiguous same speaker tags from the given transcript object."
+  {:args (s/cat :transcript ::transcript)
+   :ret ::transcript}
   [transcript]
   ;; Starting with the second speaker section as there's no need to modify the first one
   (loop [[curr-speaker-section & rest-speaker-sections] (rest transcript)
@@ -212,12 +200,10 @@
                curr-speaker
                (conj updated-transcript updated-speaker-section))))))
 
-
-(s/fdef normalise-words
-        :args (s/cat :words ::words)
-        :ret ::words)
 (defn normalise-words
   "Make it easier to work with the given words."
+  {:args (s/cat :words ::words)
+   :ret ::words}
   [words]
   (map (fn [word]
          (update word :text
@@ -230,10 +216,6 @@
                       (str/replace #"--+" "—"))))
        words))
 
-
-(s/fdef fix-broken-words
-        :args (s/cat :words ::words)
-        :ret ::words)
 (defn fix-broken-words
   "Correct broken words or punctuation that have been split into two word objects back into one.
   Some observed examples
@@ -241,6 +223,8 @@
   - 'beingness' -> 'being' and 'ness'
   Sometimes punctuation marks like periods, question marks, commas and single quotes are also
   contained in a separate word object."
+  {:args (s/cat :words ::words)
+   :ret ::words}
   [words]
   ;; Starting with the second word since the first word won't have any issues
   (loop [[curr-word & rest-words] (rest words)
@@ -295,12 +279,10 @@
                      vec
                      (conj updated-word))))))))
 
-
-(s/fdef split-multi-words
-        :args (s/cat :words ::words)
-        :ret ::words)
 (defn split-multi-words
   "Split word objects containing multiple words."
+  {:args (s/cat :words ::words)
+   :ret ::words}
   [words]
   (loop [[word & rest-words] words
          new-words []]
@@ -342,10 +324,9 @@
         (recur (cons part2-word rest-words)
                (conj new-words part1-word))))))
 
-(s/fdef speaker-section->cues
-        :args (s/cat :speaker-section ::speaker-section)
-        :ret ::dspecs/cues)
 (defn speaker-section->cues
+  {:args (s/cat :speaker-section ::speaker-section)
+   :ret ::dspecs/cues}
   [speaker-section]
   (map-indexed
     (fn [idx word]
@@ -357,16 +338,14 @@
        :end (secs->duration (:end_time word))})
     (:words speaker-section)))
 
-(s/fdef secs->duration
-        :args (s/cat :secs float?)
-        :ret ::dspecs/duration)
 (defn secs->duration
+  {:args (s/cat :secs float?)
+   :ret ::dspecs/duration}
   [secs]
   (-> secs
       (or 0.0) ; null guard
       (* 1000) ; seconds -> milliseconds
       (u/millis->duration :show-millis? true)))
-
 
 (comment
   (-> {:name "Normal transcript"
