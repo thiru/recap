@@ -29,6 +29,7 @@
    :min-cue-duration-secs 1.7
    :sonix
    {:api-key ""
+    :media-status {:url "https://api.sonix.ai/v1/media/%s"}
     :json {:url "https://api.sonix.ai/v1/media/%s/transcript.json"}
     :srt {:url "https://api.sonix.ai/v1/media/%s/transcript.srt"
           :opts {:limit_captions true
@@ -106,3 +107,6 @@
     (do
       (r/print-msg (r/r :warn "No user config.edn found, using defaults")) ; DEBUG
       default-config)))
+
+(comment
+  @active-cfg)

@@ -55,6 +55,26 @@
   "Supported captions formats."
   #{:srt :vtt})
 
+(defn get-media-status
+  "Get the status and metadata of the specified document id.
+  See the following link for more details:
+  https://sonix.ai/docs/api#media_status"
+  {:args (s/cat :id ::doc-id)
+   :ret (s/or :success map?
+              :failure ::r/result)}
+  [id]
+  (b/cond
+    (str/blank? id)
+    (r/r :error "No document id provided")
+
+    let [api-res (http-get (format (-> @cfg/active-cfg :sonix :media-status :url) id))]
+
+    (r/failed? api-res)
+    api-res
+
+    :else
+    api-res))
+
 (defn get-transcript
   "Get the transcript of the document with the specified id."
   {:args (s/cat :id ::doc-id)
@@ -362,6 +382,7 @@
                              {:text " three" :start_time 1 :end_time 2}]}]}
       (xscript->captions))
 
+  (get-media-status "invalid-id")
   (get-captions :vtt "invalid-id")
   (get-transcript "invalid-id")
   (-> (get-transcript "invalid-id")
