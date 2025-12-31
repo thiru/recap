@@ -2,6 +2,7 @@
   "Common/generic utilities."
   (:refer-clojure :exclude [defn])
   (:require [better-cond.core :as b]
+            [clojure.pprint :as pprint]
             [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [clojure.java.io :as io]
@@ -135,6 +136,20 @@
     (apply format (str/join "" formatter) args)
     (apply format formatter args)))
 
+
+(defn fmt+
+  "A convenience function to create a formatted string (via `pprint/cl-format`).
+
+  The first argument is the format control string. If it's a list it will be
+  concatenated together. This makes it easier to format long strings."
+  {:args (s/cat :formatter (s/or :whole-string string?
+                                 :segmented-string (s/coll-of string?))
+                :args (s/* any?))
+   :ret string?}
+  [formatter & args]
+  (if (sequential? formatter)
+    (apply pprint/cl-format nil (str/join "" formatter) args)
+    (apply pprint/cl-format nil formatter args)))
 
 (defn deep-merge
   "Recursively merges the given maps.
@@ -286,3 +301,23 @@
            (if show-millis?
              (format ".%03d" milliseconds)
              "")))))
+
+
+(defn split-when
+  "Split the given collection when the predicate is truthy."
+  {:args (s/cat :pred fn?
+                :coll coll?)
+   :ret coll?}
+  [pred coll]
+  (reduce (fn [acc x]
+            (if (pred x)
+              (conj acc [])
+              (update acc (dec (count acc)) conj x)))
+          [[]]
+          coll))
+
+
+(comment
+  (fmt+ "I have ~d item~:p" 0)
+  (fmt+ "I have ~d item~:p" 1)
+  (split-when zero? [1 2 3 0 4 5 6 0 7 8 9]))
