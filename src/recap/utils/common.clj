@@ -80,6 +80,16 @@
   [expr]
   (if (not s/*compile-asserts*)
     `~expr
+    `(let [evaled# ~expr]
+       (print (format "%s => " '~expr))
+       (puget/cprint evaled#)
+       evaled#)))
+
+(defmacro spy+
+  "Like `spy` but also includes caller info like source file and line number."
+  [expr]
+  (if (not s/*compile-asserts*)
+    `~expr
     `(let [evaled# ~expr
            caller# (get-last-caller)]
        (print (format "[%s:%d] %s => " (:fn caller#) (:line caller#) '~expr))
