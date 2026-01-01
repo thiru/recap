@@ -210,6 +210,35 @@
     :else
     team-medias))
 
+(defn process-single-captions
+  "Download a transcript and fully process as a captions file."
+  {:args (s/cat :id ::doc-id)
+   :ret (s/or :success (s/merge ::r/result
+                                (s/keys :req-un [::dspecs/caption]))
+              :failure ::r/result)}
+  [id]
+  (b/cond
+    (str/blank? id)
+    (r/r :error "No document id provided")
+
+    let [transcript (get-transcript id)]
+
+    (r/failed? transcript)
+    transcript
+
+    :else
+    (r/while-success->
+      (xscript->captions transcript)
+      (restitch)
+      (fix-overlapping-cues)
+      (fixup-cues)
+      (linger-cues)
+      (as-> $
+        (r/r :success
+             (u/fmt+ "Successfully converted Sonix transcript to captions: ~s"
+                     (:name transcript))
+             {:caption $})))))
+
 (defn process-team-captions
   "Find all documents belonging to a team effort (based on the specified document id) and combine
   them to produce a single, fully processed captions file."
@@ -518,6 +547,7 @@
                              {:text " three" :start_time 1 :end_time 2}]}]}
       (xscript->captions))
 
+  (process-single-captions "invalid-id")
   (process-team-captions "invalid-id")
   (find-team-medias "invalid-id")
   (list-media-files "invalid-id")
