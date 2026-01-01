@@ -9,6 +9,7 @@
             [recap.caption.data-specs :as dspecs]
             [recap.caption.speaker :as speaker]
             [recap.config :as cfg]
+            [recap.fixup :refer [fixup]]
             [recap.utils.common :as u]
             [recap.utils.specin :refer [defn]]
             [recap.utils.results :as r]))
@@ -296,6 +297,17 @@
    :ret ::dspecs/caption}
   [captions]
   (update captions :cues distinct))
+
+(defn fixup-cues
+  "Run fixup on all cues in the given captions."
+  {:args (s/cat :caption ::dspecs/caption)
+   :ret ::dspecs/caption}
+  [captions]
+  (update captions :cues
+          (fn [cues]
+            (mapv (fn [cue]
+                    (update cue :lines #(mapv fixup %)))
+                  cues))))
 
 
 (defn fix-overlapping-cues
