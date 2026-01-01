@@ -1,16 +1,24 @@
 (ns recap.sonix
   "Interop with Sonix's web API."
+  (:refer-clojure :exclude [defn])
   (:require
     [better-cond.core :as b]
     [babashka.http-client :as http]
     [cheshire.core :as json]
     [clojure.spec.alpha :as s]
     [clojure.string :as str]
+    [recap.caption :refer [fix-overlapping-cues fixup-cues]]
     [recap.caption.data-specs :as dspecs]
+    [recap.caption.combine :refer [combine]]
+    [recap.caption.linger :refer [linger-cues]]
+    [recap.caption.restitch :refer [restitch]]
     [recap.config :as cfg]
+    [recap.utils.log :refer [log]]
     [recap.utils.common :as u]
     [recap.utils.results :as r]
     [recap.utils.specin :refer [defn]]))
+
+(set! *warn-on-reflection* true) ; for graalvm
 
 (declare
   api-key
@@ -23,7 +31,8 @@
   safe-parse-json
   secs->duration
   speaker-section->cues
-  split-multi-words)
+  split-multi-words
+  team-media?)
 
 ;; NOTE: The following spec is based on the JSON response for retrieving a Sonix transcript.
 ;; See: https://sonix.ai/docs/api#get_json
@@ -34,7 +43,7 @@
 (s/def ::name string?)
 (s/def ::quality_score (s/nilable string?))
 
-(s/def ::speaker string?)
+(s/def ::speaker (s/nilable string?))
 (s/def ::start_time float?)
 (s/def ::end_time float?)
 
@@ -168,6 +177,91 @@
     (http-get (format (base-url captions-format) id)
               :opts {:form-params (api-opts captions-format)})))
 
+(defn find-team-medias
+  "Find all media files that a team of individuals may be working on, where one of those files
+  is the given id."
+  {:args (s/cat :id ::doc-id)
+   :ret (s/or :success map?
+              :failure ::r/result)}
+  [id]
+  (b/cond
+    (str/blank? id)
+    (r/r :error "No document id provided")
+
+    let [media-status (get-media-status id)]
+
+    (r/failed? media-status)
+    media-status
+
+    let [my-folder-id (-> media-status :folder :id)]
+
+    (str/blank? my-folder-id)
+    (r/r :error (str "Failed to get folder id of the given media id: " id))
+
+    let [medias-res (list-media-files my-folder-id)]
+
+    (r/failed? medias-res)
+    medias-res
+
+    let [team-medias (->> medias-res
+                          :media
+                          (filter #(team-media? media-status %)))]
+
+    :else
+    team-medias))
+
+(defn process-team-captions
+  "Find all documents belonging to a team effort (based on the specified document id) and combine
+  them to produce a single, fully processed captions file."
+  {:args (s/cat :id ::doc-id)
+   :ret (s/or :success (s/merge ::r/result
+                                (s/keys :req-un [::dspecs/caption]))
+              :failure ::r/result)}
+  [id]
+  (b/cond
+    (str/blank? id)
+    (r/r :error "No document id provided")
+
+    let [team-medias (find-team-medias id)]
+
+    (r/failed? team-medias)
+    team-medias
+
+    (= 1 (count team-medias))
+    (r/r :error
+         (str "Could not find other documents that appear to be part of a team effort "
+              "with this one."))
+
+    do (log (r/r :info (u/fmt+ "Found ~d team document~:p associated with ~s"
+                               (count team-medias) id)))
+
+    let [sorted-medias (sort-by :name team-medias)
+         transcripts (mapv #(get-transcript (:id %)) sorted-medias)
+         failed-transcript (some r/failed? transcripts)]
+
+    failed-transcript
+    failed-transcript
+
+    let [captions (mapv xscript->captions transcripts)
+         failed-caption (some r/failed? captions)]
+
+    failed-caption
+    failed-caption
+
+    :else
+    (r/while-success->
+      (combine captions)
+      (restitch)
+      (fix-overlapping-cues)
+      (fixup-cues)
+      (linger-cues)
+      (as-> $
+        (r/r :success
+             (u/fmt+ ["Successfully converted ~d Sonix transcript~:p to captions "
+                      "(part of team: ~s)"]
+                     (count sorted-medias)
+                     (-> sorted-medias first :name))
+             {:caption $})))))
 
 (defn base-url [captions-format]
   (-> @cfg/active-cfg :sonix captions-format :url))
@@ -391,6 +485,24 @@
       (* 1000) ; seconds -> milliseconds
       (u/millis->duration :show-millis? true)))
 
+(defn team-media?
+  "Determine whether the two medias appear to be part of a team effort."
+  {:args (s/cat :ref-media map?
+                :other-media map?)
+   :ret boolean?}
+  [ref-media other-media]
+  (and
+    ;; Starts with a number
+    (re-find #"^\d+" (:name other-media))
+    ;; Duration diff is at most 2 (seconds)
+    (> 2
+       (abs (- (:duration other-media)
+               (:duration ref-media))))
+    ;; Last 10 characters are the same
+    (str/ends-with? (:name other-media)
+                    (subs (:name ref-media)
+                          (- (count (:name other-media)) 10)))))
+
 (comment
   (-> {:name "Normal transcript"
        :transcript [{:speaker "M"
@@ -406,6 +518,8 @@
                              {:text " three" :start_time 1 :end_time 2}]}]}
       (xscript->captions))
 
+  (process-team-captions "invalid-id")
+  (find-team-medias "invalid-id")
   (list-media-files "invalid-id")
   (get-media-status "invalid-id")
   (get-captions :vtt "invalid-id")
