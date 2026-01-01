@@ -2,11 +2,9 @@
   "Simple/naive logging."
   {:clj-kondo/config '{:linters {:unresolved-var {:exclude [jansi-clj.core]}}}}
   (:refer-clojure :exclude [defn])
-  (:require
-            [clojure.spec.alpha :as s]
+  (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]
             [jansi-clj.core :as jansi]
-            [recap.utils.log :as log]
             [recap.utils.results :as r]
             [recap.utils.specin :refer [defn]]))
 
