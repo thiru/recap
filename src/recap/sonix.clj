@@ -286,11 +286,10 @@
       (linger-cues)
       (as-> $
         (r/r :success
-             (u/fmt+ ["Successfully converted ~d Sonix transcript~:p to captions "
-                      "(part of team: ~s)"]
-                     (count sorted-medias)
-                     (-> sorted-medias first :name))
-             {:caption $})))))
+             (u/fmt+ ["Successfully converted ~d Sonix transcript~:p to captions"]
+                     (count sorted-medias))
+             {:caption $
+              :source-medias (map :name sorted-medias)})))))
 
 (defn base-url [captions-format]
   (-> @cfg/active-cfg :sonix captions-format :url))
