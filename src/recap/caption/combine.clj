@@ -80,7 +80,7 @@
                            final-cues
                            (recur (inc idx)
                                   (nth segmented-cues (inc idx) nil)
-                                  (into final-cues (nth curr-segm-cue idx)))))]
+                                  (into final-cues (nth curr-segm-cue idx nil)))))]
 
     :else
     ;; NOTE: assuming the header is the same across all captions so we simply take the first one
