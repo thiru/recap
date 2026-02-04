@@ -16,7 +16,7 @@
    :ret boolean?}
   [cue]
   (boolean
-    (some #(re-find #"^xxxxx+$" (-> % str/trim str/lower-case))
+    (some #(re-find #"^xxxxx+" (-> % str/trim str/lower-case))
           (:lines cue))))
 
 (defn- partition-cues
