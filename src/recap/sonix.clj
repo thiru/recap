@@ -261,8 +261,11 @@
          (str "Could not find other documents that appear to be part of a team effort "
               "with this one."))
 
-    do (log (r/r :info (u/fmt+ "Found ~d team document~:p associated with ~s"
-                               (count team-medias) id)))
+    do (log (r/r :info (u/fmt+ "Found ~d team document~:p associated with ~s: ~s"
+                               (count team-medias) id
+                               (->> team-medias
+                                    (map :id)
+                                    (str/join ", ")))))
 
     let [sorted-medias (sort-by :name team-medias)
          transcripts (mapv #(get-transcript (:id %)) sorted-medias)
