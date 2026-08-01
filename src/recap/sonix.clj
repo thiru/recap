@@ -235,9 +235,10 @@
       (linger-cues)
       (as-> $
         (r/r :success
-             (u/fmt+ "Successfully converted Sonix transcript to captions: ~s"
+             (u/fmt+ "Successfully converted Sonix transcript to captions"
                      (:name transcript))
-             {:caption $})))))
+             {:caption $
+              :source-medias [(:name transcript)]})))))
 
 (defn process-team-captions
   "Find all documents belonging to a team effort (based on the specified document id) and combine
